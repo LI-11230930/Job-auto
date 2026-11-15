@@ -11,6 +11,9 @@
     <img src="https://img.shields.io/badge/E2EE-AES--256--GCM-0f766e?style=flat-square" alt="AES-256-GCM" />
     <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License MIT" />
   </p>
+  <p>
+    <strong>简体中文</strong> | <a href="README.en.md">English</a>
+  </p>
 </div>
 
 ---
