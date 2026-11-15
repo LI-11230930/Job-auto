@@ -39,9 +39,13 @@ function loadAppIcon() {
 
 function resolveProjectRoot() {
   if (app.isPackaged) {
-    // In packaged mode, runtime mutable workspace lives alongside userData or portable dir while code resources live in resourcesPath
+    // In packaged mode, mutable user workspace lives alongside userData/portable dir while bundled code/resources live in resourcesPath
     const resDir = process.resourcesPath;
-    if (fs.existsSync(path.join(resDir, 'Job-auto'))) {
+    if (
+      fs.existsSync(path.join(resDir, 'backend')) ||
+      fs.existsSync(path.join(resDir, 'prompts')) ||
+      fs.existsSync(path.join(resDir, 'Job-auto'))
+    ) {
       return resDir;
     }
   }
@@ -117,6 +121,25 @@ async function isBackendReady() {
   }
 }
 
+function resolveBackendCommand(codeRoot) {
+  const exeName = process.platform === 'win32' ? 'job-agent-backend.exe' : 'job-agent-backend';
+  const bundledCandidates = [
+    path.join(process.resourcesPath || '', 'backend', exeName),
+    path.join(codeRoot, 'backend', exeName),
+    path.join(__dirname, 'backend-bin', 'job-agent-backend', exeName),
+  ];
+  for (const exe of bundledCandidates) {
+    if (exe && fs.existsSync(exe)) {
+      return { cmd: exe, prefixArgs: [], mode: 'bundled_exe' };
+    }
+  }
+  return {
+    cmd: resolvePythonExecutable(codeRoot),
+    prefixArgs: ['-m', 'job_agent.cli'],
+    mode: 'python',
+  };
+}
+
 async function ensureSidecarRunning() {
   if (await isBackendReady()) {
     return true;
@@ -126,7 +149,7 @@ async function ensureSidecarRunning() {
   if (app.isPackaged && !fs.existsSync(dataRoot)) {
     fs.mkdirSync(dataRoot, { recursive: true });
   }
-  const pythonExe = resolvePythonExecutable(codeRoot);
+  const backend = resolveBackendCommand(codeRoot);
   const env = {
     ...process.env,
     PYTHONIOENCODING: 'utf-8',
@@ -137,8 +160,7 @@ async function ensureSidecarRunning() {
       .join(path.delimiter),
   };
   const args = [
-    '-m',
-    'job_agent.cli',
+    ...backend.prefixArgs,
     'up',
     '--no-browser',
     '--host',
@@ -149,17 +171,40 @@ async function ensureSidecarRunning() {
     String(CDP_PORT),
   ];
 
-  sidecarProc = spawn(pythonExe, args, {
-    cwd: app.isPackaged ? codeRoot : codeRoot,
+  const logDir = path.join(dataRoot, 'logs');
+  fs.mkdirSync(logDir, { recursive: true });
+  const logFile = path.join(logDir, 'sidecar_desktop.log');
+
+  sidecarProc = spawn(backend.cmd, args, {
+    cwd: app.isPackaged ? dataRoot : codeRoot,
     env,
     windowsHide: true,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   startedSidecarByUs = true;
 
-  sidecarProc.stdout.on('data', (d) => process.stdout.write(`[sidecar] ${d}`));
-  sidecarProc.stderr.on('data', (d) => process.stderr.write(`[sidecar] ${d}`));
-  sidecarProc.on('exit', () => {
+  const appendLog = (line) => {
+    try {
+      fs.appendFileSync(logFile, line, 'utf-8');
+    } catch {
+      // non-fatal log error
+    }
+  };
+  appendLog(`[${new Date().toISOString()}] starting backend (${backend.mode}): ${backend.cmd}\n`);
+
+  sidecarProc.on('error', (err) => {
+    appendLog(`[sidecar spawn error] ${err.message}\n`);
+  });
+  sidecarProc.stdout.on('data', (d) => {
+    process.stdout.write(`[sidecar] ${d}`);
+    appendLog(`[stdout] ${d}`);
+  });
+  sidecarProc.stderr.on('data', (d) => {
+    process.stderr.write(`[sidecar] ${d}`);
+    appendLog(`[stderr] ${d}`);
+  });
+  sidecarProc.on('exit', (code) => {
+    appendLog(`[sidecar exit] code=${code}\n`);
     sidecarProc = null;
   });
 
@@ -290,7 +335,7 @@ function registerIpcHandlers() {
     } else if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('sidecar:status', {
         state: 'error',
-        message: '重试启动仍未就绪，请打开日志目录排查 Python 环境或端口占用。',
+        message: '重试启动仍未就绪，请点击「打开日志目录」检查 sidecar_desktop.log 或端口 8788 是否被占用。',
       });
     }
     return ok;
@@ -300,7 +345,7 @@ function registerIpcHandlers() {
 
 function buildLoadingHtml(errorMessage = '') {
   const detail = errorMessage
-    ? `<p style="color:#b91c1c;">${errorMessage}</p><p>请确认已安装 Python 3.12+ 并运行过依赖初始化（根目录 start.bat）。</p>`
+    ? `<p style="color:#b91c1c;">${errorMessage}</p><p>内置本地服务未能正常启动，请检查 8788 端口是否被其他程序占用。</p>`
     : '<p>正在启动本地工作台与扩展接收器（127.0.0.1:8788）...</p>';
   return `data:text/html;charset=utf-8,${encodeURIComponent(`
     <!doctype html>
@@ -461,10 +506,10 @@ async function createWindow(initialPath = '/review') {
     if (fs.existsSync(splashFile)) {
       mainWindow.webContents.send('sidecar:status', {
         state: 'error',
-        message: '本地 Python 后端未能在 25 秒内就绪。',
+        message: '内置本地后端服务未能在 25 秒内就绪，请检查日志目录或 8788 端口占用。',
       });
     } else {
-      await mainWindow.loadURL(buildLoadingHtml('本地 Python 后端未能在 25 秒内就绪。'));
+      await mainWindow.loadURL(buildLoadingHtml('内置本地后端服务未能在 25 秒内就绪。'));
     }
   }
 }

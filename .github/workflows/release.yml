@@ -35,6 +35,19 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Build zero-dependency Python backend executable (PyInstaller)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . pyinstaller
+          python desktop/build_backend.py
+      - name: Smoke test standalone backend executable
+        run: |
+          $env:JOB_AUTO_ROOT = "$env:TEMP\job_auto_exe_smoke"
+          .\desktop\backend-bin\job-agent-backend\job-agent-backend.exe doctor
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

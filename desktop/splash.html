@@ -191,7 +191,7 @@
       if (payload?.state === 'error') {
         clearTimeout(diagTimer);
         diagTitle.textContent = '本地引擎启动遇到问题';
-        diagMsg.textContent = payload.message || '请确认 Python 3.12+ 已初始化，或打开日志目录查看详情。';
+        diagMsg.textContent = payload.message || '请点击「打开日志目录」查看 sidecar_desktop.log 详情，或确认 8788 端口未被占用。';
         diagCard.style.display = 'block';
       }
     });

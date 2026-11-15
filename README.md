@@ -21,7 +21,7 @@
 
 - [核心特性](#核心特性)
 - [界面与功能一览](#界面与功能一览)
-- [快速开始（下载安装 / 源码启动）](#快速开始下载安装--源码启动)
+- [快速开始（零环境 `.exe` 开箱即用）](#快速开始零环境-exe-开箱即用)
 - [详尽使用指南](#详尽使用指南)
 - [Cloudflare Worker 零知识手机审阅配置](#cloudflare-worker-零知识手机审阅配置)
 - [常用命令行工具（CLI）](#常用命令行工具cli)
@@ -78,31 +78,30 @@
 
 ---
 
-## 快速开始（下载安装 / 源码启动）
+## 快速开始（零环境 `.exe` 开箱即用）
 
-### 方式一：下载 GitHub Releases Windows 安装包（推荐）
+> **无需安装 Python、Node.js，也无需任何命令行或 `.bat` 脚本**——桌面客户端与本地 AI 后端引擎已完整封装进单一 Windows `.exe` 安装包。
 
-1. 前往本仓库的 **[GitHub Releases](https://github.com/LI-11230930/Job-auto/releases)** 页面。
-2. 下载最新版本的安装包（可对照同页面提供的 `SHA256SUMS.txt` 校验完整性）：
-   - **`Job-auto Setup 1.8.0.exe`**：标准 Windows 安装向导，安装后生成桌面/开始菜单快捷方式；
-   - **`Job-auto 1.8.0.exe`**：单文件便携版（Portable），双击直接运行，无需安装。
-3. 首次打开若尚未准备 API Key，可直接在审阅页点击「载入示例体验数据」，熟悉全部操作。
+1. 前往本仓库的 **[GitHub Releases](https://github.com/LI-11230930/Job-auto/releases)** 下载最新版本（可对照同页面的 `SHA256SUMS.txt` 校验文件完整性）：
+   - **`Job-auto Setup 1.8.0.exe`**：标准 Windows 安装向导，安装后直接通过桌面 / 开始菜单图标启动；
+   - **`Job-auto 1.8.0.exe`**：单文件便携版（Portable），**双击即开即用**，所有个人数据与配置存放在同目录下的 `Job-auto-Data` 文件夹中，不污染系统。
+2. 首次打开若尚未准备 API Key，可直接在审阅页点击 **「载入示例体验数据」**，完整体验单页简历、月度看板与零知识加密审阅全流程。
 
-### 方式二：从源码一键启动（Windows 开发 / 自定义运行）
+<details>
+<summary>开发者模式：从源码本地调试与构建安装包</summary>
 
-> 环境要求：**Python 3.12+**；如需运行 Electron 桌面壳层，另需 **Node.js 20+**（未安装 Node.js 时会自动降级为轻量独立应用窗口模式）。
-
+- 环境要求：**Python 3.12+**、**Node.js 20+**
 ```bash
 git clone https://github.com/LI-11230930/Job-auto.git
 cd Job-auto
 ```
+Windows 本机开发调试可直接运行 `start.bat`（自动初始化 `.venv` 并以 Electron 源码模式启动）；如需本地重新打包完整独立 `.exe`，可执行：
+```bash
+python desktop/build_backend.py
+cd desktop && npm install && npx electron-builder --win portable nsis --publish never
+```
 
-直接双击根目录下的 **`start.bat`**，脚本会自动完成以下初始化并拉起桌面 App：
-1. 检查并创建 `.venv` 虚拟环境，以可编辑模式安装核心包（`Job-auto`）；
-2. 自动清理当前工作区残留的旧版后台进程，确保每次加载最新代码与界面；
-3. 如已安装 Node.js，自动在 `desktop/` 安装依赖并以 Electron 桌面壳启动，否则以独立应用窗口模式启动主界面。
-
-Linux / macOS 用户可查看并执行 `scripts/start.sh`。
+</details>
 
 ---
 
@@ -119,7 +118,7 @@ Linux / macOS 用户可查看并执行 `scripts/start.sh`。
 
 1. **安装伴侣浏览器扩展**：
    - 打开 Edge 浏览器 -> 访问 `edge://extensions` -> 开启右下角/右上角「开发人员模式」；
-   - 点击「加载解压缩的扩展」，选择项目内的 `extensions/job_auto_collector/` 目录。
+   - 点击「加载解压缩的扩展」，选择安装目录 `resources/extensions/job_auto_collector/`（或源码仓库内的 `extensions/job_auto_collector/` 目录）。
 2. **开始采岗**：
    - 在 Job-auto 顶栏「更多工具」点击「启动插件抓岗浏览器 (9222)」，或在你常使用的浏览器中浏览招聘网站搜索页/详情页，点击扩展图标即可自动解析并推送到本地工作区。
    - 也可使用公开校招源同步（`sync-campus` / `sync-public`）或手动导入单条 JD / 长招聘贴。
@@ -179,7 +178,7 @@ Job-auto/
 ├── Job-auto/                   # Python 核心引擎包（采集、Stage1/2/3/4、AI 调度、Web 服务与 UI）
 ├── desktop/                    # Electron 桌面壳、系统托盘、闪屏页、图标资源与打包配置
 │   ├── assets/                 # App 图标（icon.png / icon.ico / icon.svg）
-│   ├── main.js / preload.js / splash.html
+│   ├── main.js / preload.js / splash.html / build_backend.py
 │   └── package.json            # electron-builder Windows portable & NSIS 打包定义
 ├── extensions/
 │   └── job_auto_collector/     # Edge/Chrome 伴侣扩展（v1.3.0：采岗采集 + 辅助预填）
@@ -187,10 +186,10 @@ Job-auto/
 │   └── cloudflare-worker/      # Cloudflare Workers 零知识加密中转脚本与部署指南
 ├── config/                     # 仅包含脱敏示例配置（user_config.example.yaml / extensions.example.yaml）
 ├── prompts/                    # 岗位匹配、简历定制与信息提取的系统提示词模板
-├── scripts/                    # 常用批处理启动辅助脚本
+├── scripts/                    # 开发者本地调试辅助脚本（Releases 安装包用户无需使用）
 ├── tests/                      # 自动化测试套件（pytest + FastAPI + E2EE 端到端测试）
 ├── .github/workflows/          # GitHub Actions 自动化测试与 v* 标签发布流水线（release.yml）
-├── start.bat                   # Windows 一键启动桌面 App 入口
+├── start.bat                   # Windows 本地源码一键调试入口（Releases 安装包用户无需使用）
 ├── pyproject.toml              # Python 项目元数据与依赖清单
 └── .env.example                # 本地环境变量示例模板
 ```

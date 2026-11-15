@@ -41,15 +41,8 @@
     ],
     "extraResources": [
       {
-        "from": "../Job-auto",
-        "to": "Job-auto",
-        "filter": [
-          "**/*",
-          "!**/__pycache__/**",
-          "!**/*.pyc",
-          "!**/*.egg-info/**",
-          "!**/tests/**"
-        ]
+        "from": "backend-bin/job-agent-backend",
+        "to": "backend"
       },
       {
         "from": "../extensions",

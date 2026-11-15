@@ -20,6 +20,15 @@ if errorlevel 1 (
 )
 
 :run_build
+if exist "..\.venv\Scripts\python.exe" (
+    echo [Job-auto Desktop] Bundling standalone backend executable...
+    "..\.venv\Scripts\python.exe" build_backend.py
+    if errorlevel 1 (
+        echo [Error] Backend executable build failed.
+        pause
+        exit /b 1
+    )
+)
 echo [Job-auto Desktop] Building Windows portable and unpacked App in desktop\dist...
 call npm run build
 set "EXIT_CODE=%errorlevel%"

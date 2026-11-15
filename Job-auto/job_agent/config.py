@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import Literal
 
@@ -147,6 +148,15 @@ def get_code_root() -> Path:
     override = os.getenv("JOB_AUTO_CODE_ROOT", "").strip()
     if override:
         return Path(override).expanduser().resolve()
+    if getattr(sys, "frozen", False):
+        exe_parent = Path(sys.executable).resolve().parent
+        # When bundled inside Electron resources/backend/job-agent-backend.exe, resources/ holds prompts & extensions
+        if (exe_parent.parent / "prompts").is_dir():
+            return exe_parent.parent
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            return Path(meipass).resolve()
+        return exe_parent
     return Path(__file__).resolve().parents[2]
 
 
@@ -154,6 +164,8 @@ def get_project_root() -> Path:
     override = os.getenv("JOB_AUTO_ROOT", "").strip()
     if override:
         return Path(override).expanduser().resolve()
+    if getattr(sys, "frozen", False):
+        return Path.cwd().resolve()
     return Path(__file__).resolve().parents[2]
 
 

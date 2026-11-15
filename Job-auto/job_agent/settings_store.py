@@ -8,6 +8,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -179,9 +180,21 @@ def configure_daily_email_schedule(
         }
 
     bat_path = resolved_root / "scripts" / "send_daily_email.bat"
+    if getattr(sys, "frozen", False):
+        exe_path = Path(sys.executable).resolve()
+        arg = (
+            f'/c "set JOB_AUTO_ROOT={resolved_root}&& '
+            f'\\"{exe_path}\\" daily-cycle --skip-sync --skip-edge --skip-prefilter --skip-llm --send-email"'
+        )
+        task_exec = "cmd.exe"
+        task_arg = arg
+    else:
+        task_exec = "cmd.exe"
+        task_arg = f'/c "{bat_path}"'
+
     if enabled:
         ps_cmd = (
-            f"$action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c \"{bat_path}\"' -WorkingDirectory '{resolved_root}'; "
+            f"$action = New-ScheduledTaskAction -Execute '{task_exec}' -Argument '{task_arg}' -WorkingDirectory '{resolved_root}'; "
             f"$trigger = New-ScheduledTaskTrigger -Daily -At '{clean_time}'; "
             "$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries; "
             f"Register-ScheduledTask -TaskName '{SCHEDULE_TASK_NAME}' -Action $action -Trigger $trigger -Settings $settings -Force | Out-Null"

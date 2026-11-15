@@ -254,5 +254,7 @@ AGENTS.md
 .github/workflows/antigravity-review.yml
 Job-auto/*.egg-info/
 desktop/dist-package-verify/
+desktop/backend-bin/
+desktop/build-pyinstaller/
 
 
