@@ -1,0 +1,46 @@
+# 外部工具与插件扩展注册表（模板）
+# 目的：验证“双核工作流 + 未来接入更多外部工具”的可插拔扩展能力。
+# 复制为本地 config/extensions.yaml 后按需启用，核心代码只依赖统一接口协议。
+
+llm_providers:
+  primary:
+    type: gemini_interactions        # 使用 google-genai >= 2.30.1 (Interactions API)
+    default_model: gemini-3.8-flash
+    reasoning_model: gemini-4-argon
+    lite_model: gemini-3.5-flash-lite
+    api_key_env: GEMINI_API_KEY
+  fallback:
+    enabled: false
+    type: openai_compatible          # 可选：用于降级或批处理对比
+    base_url: https://api.siliconflow.cn/v1
+    model: ""
+    api_key_env: FALLBACK_LLM_API_KEY
+
+job_sources:
+  - id: existing_campus_site
+    type: local_campus_json_readonly # 只读挂载外部校招岗位 JSON（按需配置本地文件路径）
+    enabled: false
+    path: ./local/campus_jobs.json
+    priority: 100
+  - id: manual_ingest
+    type: manual_text_or_url         # 单条粘贴或汇总推文一键拆分
+    enabled: true
+
+notifiers:
+  - id: local_ui_only
+    type: none
+    enabled: true
+  - id: feishu_webhook
+    type: webhook
+    enabled: false
+    webhook_env: FEISHU_WEBHOOK_URL
+
+external_tools:
+  # 未来可扩展的外部开发/运行工具插槽（MCP / 外部 Harness / 浏览器）
+  mcp_servers:
+    - id: wb-bridge
+      purpose: "CodeBuddy 代理桥接（常规辅助用 deepseek-v4.1-flash，疑难分析用 kimi 高推理模型）"
+      enabled: true
+  batch_delegation:
+    enabled: false
+    provider: dsh                    # 本机官方 DeepSeek Harness（需启动桌面端加载 dsh MCP）

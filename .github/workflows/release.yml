@@ -1,0 +1,64 @@
+name: Build & Publish GitHub Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install package & test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Lint and run test suite
+        run: |
+          ruff check Job-auto tests
+          pytest -v
+
+  build-windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: desktop/package-lock.json
+      - name: Install desktop dependencies & package Windows installers
+        working-directory: desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm ci
+          npx electron-builder --win portable nsis --publish never
+      - name: Generate SHA-256 checksums
+        working-directory: desktop/dist
+        shell: pwsh
+        run: |
+          Get-FileHash *.exe -Algorithm SHA256 | Format-Table -AutoSize | Out-File -Encoding utf8 SHA256SUMS.txt
+      - name: Upload GitHub Release assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            desktop/dist/*.exe
+            desktop/dist/*.blockmap
+            desktop/dist/latest.yml
+            desktop/dist/SHA256SUMS.txt
+          generate_release_notes: true

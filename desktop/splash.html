@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Job-auto · 启动中</title>
+<style>
+  :root {
+    --plum: #2e1065;
+    --violet: #7c3aed;
+    --violet-soft: #ede9fe;
+    --bg: #f9f8fe;
+    --ink: #1e1b4b;
+    --muted: #6b7280;
+    --border: #e9d5ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif;
+    background: radial-gradient(circle at top right, #ede9fe 0%, var(--bg) 52%, #ffffff 100%);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .shell {
+    width: 100%;
+    max-width: 540px;
+    background: #ffffff;
+    border: 1.5px solid var(--border);
+    border-radius: 18px;
+    padding: 28px 30px;
+    box-shadow: 0 22px 48px rgba(46, 16, 101, 0.08);
+    animation: fadeUp 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .brand { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .mark {
+    width: 46px; height: 46px; border-radius: 13px;
+    background: linear-gradient(135deg, var(--plum), var(--violet));
+    color: #ffffff; font-weight: 800; font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 18px rgba(124, 58, 237, 0.28);
+  }
+  .brand h1 { font-size: 20px; color: var(--ink); font-weight: 800; }
+  .brand p { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .privacy-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; font-weight: 700;
+    color: #5b21b6; background: var(--violet-soft);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 4px 11px; margin-bottom: 16px;
+  }
+  .bar-track {
+    height: 6px; border-radius: 999px; background: #f3f0ff; overflow: hidden; margin-bottom: 12px;
+  }
+  .bar-fill {
+    height: 100%; width: 42%; border-radius: 999px;
+    background: linear-gradient(90deg, var(--plum), var(--violet));
+    animation: slide 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  @keyframes slide {
+    0% { transform: translateX(-110%); }
+    100% { transform: translateX(260%); }
+  }
+  .status-line { font-size: 13.5px; font-weight: 600; color: var(--ink); margin-bottom: 14px; }
+  .optimistic-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .optimistic-head {
+    display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #5b21b6; margin-bottom: 6px;
+  }
+  .cache-list { list-style: none; font-size: 12px; color: #374151; display: flex; flex-direction: column; gap: 4px; }
+  .cache-list li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px dashed #e9d5ff; }
+  .cache-list li:last-child { border-bottom: none; }
+  .diag-card {
+    display: none;
+    margin-top: 14px;
+    background: #fff7ed;
+    border: 1.5px solid #fdba74;
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .diag-card h3 { font-size: 13.5px; color: #9a3412; margin-bottom: 6px; }
+  .diag-card p { font-size: 12px; color: #7c2d12; line-height: 1.55; margin-bottom: 10px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    border: 1px solid var(--border); background: #fff; color: var(--ink);
+    padding: 7px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 700;
+    cursor: pointer; transition: transform 110ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 140ms;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--violet); border-color: var(--violet); color: #fff; }
+  .btn-primary:hover { background: #6d28d9; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="brand">
+    <div class="mark">J</div>
+    <div>
+      <h1>Job-auto · 智能求职助手 App</h1>
+      <p>V1.5 桌面端 · 星夜紫藤 × 霜白（方案 I）</p>
+    </div>
+  </div>
+
+  <div class="privacy-pill">隐私承诺：100% 本地 SQLite 运行 · 严禁任何第三方统计</div>
+
+  <div class="bar-track" id="barTrack"><div class="bar-fill"></div></div>
+  <div class="status-line" id="statusLine">正在按需唤醒本地工作台引擎（127.0.0.1:8788）...</div>
+
+  <div class="optimistic-box" id="optimisticBox">
+    <div class="optimistic-head">
+      <span>0.8s 乐观首屏缓存快照</span>
+      <span id="cacheStats">读取中...</span>
+    </div>
+    <ul class="cache-list" id="cacheList">
+      <li><span>正在读取本地缓存列表...</span><span>--</span></li>
+    </ul>
+  </div>
+
+  <div class="diag-card" id="diagCard">
+    <h3 id="diagTitle">本地后台引擎响应较慢（已超过 8 秒）</h3>
+    <p id="diagMsg">可能首次依赖校准中或端口 8788 被其他进程占用。你可以一键重试启动，或先查看本地运行日志排查。</p>
+    <div class="actions">
+      <button class="btn btn-primary" id="btnRetry">重试启动引擎</button>
+      <button class="btn" id="btnLogs">打开日志目录</button>
+      <button class="btn" id="btnOffline">打开静态进度看板</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const desktop = window.jobAutoDesktop || null;
+  const statusEl = document.getElementById('statusLine');
+  const diagCard = document.getElementById('diagCard');
+  const diagTitle = document.getElementById('diagTitle');
+  const diagMsg = document.getElementById('diagMsg');
+  const cacheStats = document.getElementById('cacheStats');
+  const cacheList = document.getElementById('cacheList');
+
+  async function loadOptimisticSnapshot() {
+    if (!desktop || typeof desktop.getCachedSnapshot !== 'function') {
+      cacheStats.textContent = '浏览器调试模式';
+      cacheList.innerHTML = '<li><span>等待工作台加载完成...</span><span>就绪</span></li>';
+      return;
+    }
+    try {
+      const snap = await desktop.getCachedSnapshot();
+      const items = Array.isArray(snap?.items) ? snap.items : [];
+      if (items.length === 0) {
+        cacheStats.textContent = '首次启动 / 演示就绪';
+        cacheList.innerHTML = '<li><span>进入后可点击「一键载入示例数据」零配置体验</span><span>V1.5</span></li>';
+        return;
+      }
+      cacheStats.textContent = `缓存 ${snap.total || items.length} 份投递包`;
+      cacheList.replaceChildren();
+      items.slice(0, 3).forEach((it) => {
+        const li = document.createElement('li');
+        const left = document.createElement('span');
+        left.textContent = `${it.company || ''} · ${it.title || ''}`;
+        const right = document.createElement('span');
+        right.style.color = '#6d28d9';
+        right.style.fontWeight = '700';
+        right.textContent = `${it.score || '--'}分`;
+        li.append(left, right);
+        cacheList.appendChild(li);
+      });
+    } catch {
+      cacheStats.textContent = '缓存读取跳过';
+    }
+  }
+
+  let diagTimer = setTimeout(() => {
+    diagCard.style.display = 'block';
+  }, 8000);
+
+  if (desktop && typeof desktop.onSidecarStatus === 'function') {
+    desktop.onSidecarStatus((payload) => {
+      if (payload?.message) statusEl.textContent = payload.message;
+      if (payload?.state === 'error') {
+        clearTimeout(diagTimer);
+        diagTitle.textContent = '本地引擎启动遇到问题';
+        diagMsg.textContent = payload.message || '请确认 Python 3.12+ 已初始化，或打开日志目录查看详情。';
+        diagCard.style.display = 'block';
+      }
+    });
+  }
+
+  document.getElementById('btnRetry')?.addEventListener('click', () => {
+    diagCard.style.display = 'none';
+    statusEl.textContent = '正在重新尝试拉起本地引擎...';
+    diagTimer = setTimeout(() => { diagCard.style.display = 'block'; }, 8000);
+    desktop?.retrySidecar?.();
+  });
+  document.getElementById('btnLogs')?.addEventListener('click', () => desktop?.openLogs?.());
+  document.getElementById('btnOffline')?.addEventListener('click', () => desktop?.openOfflineProgress?.());
+
+  loadOptimisticSnapshot();
+})();
+</script>
+</body>
+</html>

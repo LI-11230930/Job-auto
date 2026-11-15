@@ -1,0 +1,72 @@
+# Job Agent 用户配置模板
+# 复制为 config/user_config.yaml 后填写（config/user_config.yaml 已被 .gitignore 忽略）。
+# 注意：API Key 与身份证等高敏感信息请分别写入 .env 与 vault/，不要填在此文件中！
+
+data_sources:
+  campus_site_jobs_path: ""           # 可选：若你有本地离线校招 jobs.json，可填其绝对/相对路径
+  campus_site_readonly: true
+  enable_extra_public_sources: true   # 启用内置公开校招/实习接口同步
+  extra_csv_paths: []
+
+profile:
+  resume_path: ""                     # 【待用户提供】本地简历路径（PDF/DOCX/MD）
+  graduation_year: 2027               # 将从简历提取并由用户确认
+  degree: "本科"
+  major: "会计学"
+  target_roles:
+    - "财务培训生"
+    - "财务管培生"
+    - "管培生（财务方向）"
+  certifications: []                  # 将从简历提取并由用户确认
+  vault_dir: "./vault"                # 敏感字段本地隔离目录
+
+preferences:
+  primary_cities: []                  # 将从简历提取并由用户确认
+  secondary_cities: []
+  preferred_industries: []            # 将从简历提取并由用户确认
+  excluded_companies: []
+  excluded_keywords: ["销售", "电销", "催收", "兼职"]
+
+scoring:
+  min_score_for_package: 80           # 80 分以上入审批台，多多益善
+  daily_top_n: 50                     # 在每日 API 配额内尽量覆盖全部 80+ 岗位
+  weights:
+    major_fit: 30
+    hard_requirements: 10
+    skills_experience: 15
+    city_preference: 25
+    growth_potential: 20
+
+llm:
+  primary_provider: "gemini_interactions"
+  # 说明：Gemini 4 Hydrogen 为 Antigravity 对话面板模型名；
+  # Gemini Developer API 中常规任务使用 gemini-3.8-flash，疑难/复杂推理任务使用 gemini-4-argon。
+  default_model: "gemini-3.8-flash"
+  reasoning_model: "gemini-4-argon"
+  lite_model: "gemini-3.5-flash-lite"
+  api_key_env: "GEMINI_API_KEY"
+  fallback_enabled: false
+
+delivery:
+  follow_company_channel: true        # 以企业官方指定投递方式为准
+  channel_modes:
+    email: "assist"                   # 测试稳定后可切 auto
+    company_portal: "assist"          # 官网/北森等停在提交前人工确认
+    third_party: "manual"             # 第三方平台生成素材后手动投递
+  priority_ats_systems: ["beisen"]
+  daily_submit_limit: 20
+  min_interval_seconds: 30
+
+notifications:
+  strategy: "app_first"               # app_first（App弹窗优先，不可用时自动降级邮件）| app_only | app_and_email | email_only
+  desktop_notify_enabled: true        # 开启桌面 App 系统弹窗 + 应用内消息中心
+  push_preset: "none"                 # none | bark (iOS) | ntfy | serverchan | pushplus | custom_webhook
+  push_webhook_env: "PUSH_WEBHOOK_URL"
+  provider: "email_smtp"              # 备选邮件通道：email_smtp | webhook | none
+  email_preset: "qq"                  # qq | 163 | 126 | gmail | outlook | exmail_qq | aliyun_ent | custom
+  email_to: ""                        # 仅需邮件兜底或双通道时在本地配置填写
+  smtp_host_env: "SMTP_HOST"
+  smtp_port_env: "SMTP_PORT"
+  smtp_user_env: "SMTP_USER"
+  smtp_pass_env: "SMTP_PASS"
+  urgent_webhook_enabled: false

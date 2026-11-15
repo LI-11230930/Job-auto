@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ResumeTailorResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["selected", "summary"],
+  "properties": {
+    "selected": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "rewritten"],
+        "properties": {
+          "id": { "type": "string" },
+          "rewritten": { "type": "string" }
+        }
+      }
+    },
+    "summary": {
+      "type": "string",
+      "description": "面向单页简历顶部的 1-2 句个人定位摘要（同样受事实校验约束）"
+    }
+  }
+}

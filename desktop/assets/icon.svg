@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2e1065"/>
+      <stop offset="60%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="28%" cy="22%" r="55%">
+      <stop offset="0%" stop-color="#c4b5fd" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#c4b5fd" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="105" fill="url(#bg)"/>
+  <rect x="28" y="28" width="456" height="456" rx="105" fill="url(#glow)"/>
+  <rect x="30.5" y="30.5" width="451" height="451" rx="103" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="4"/>
+  <!-- Briefcase frame -->
+  <path d="M202 150 V126 A19 19 0 0 1 221 107 H291 A19 19 0 0 1 310 126 V150" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="8" stroke-linecap="round"/>
+  <rect x="123" y="150" width="266" height="232" rx="44" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.38)" stroke-width="8"/>
+  <!-- Bold J monogram -->
+  <path d="M224 195 H290 M289 195 V289 A55.5 55.5 0 0 1 180.5 306" fill="none" stroke="#ffffff" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- AI spark accent -->
+  <path d="M358 123 L367 145 L389 154 L367 163 L358 185 L349 163 L327 154 L349 145 Z" fill="#fde047"/>
+</svg>

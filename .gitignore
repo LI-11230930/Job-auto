@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+﻿# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class
@@ -219,10 +219,40 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# 个人规划与敏感资料：不上传到公开仓库
-该文件夹禁止上传github/
+# 涓汉瑙勫垝涓庢晱鎰熻祫鏂欙細涓嶄笂浼犲埌鍏紑浠撳簱
+璇ユ枃浠跺す绂佹涓婁紶github/
 job_agent_plan.md
 *.local.md
 .env
 .env.*
 !.env.example
+
+# === Job-auto 双核工作流与本地隐私追加规则 ===
+vault/
+data/
+output/
+logs/
+config/user_config.yaml
+config/extensions.yaml
+docs/job_agent_plan*.md
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.pdf
+local/
+*.local.html
+desktop/node_modules/
+desktop/dist/
+
+# === 仅公开上传 App：排除开发过程规划、内部工作流与个人文件 ===
+Product Program/
+docs/
+.agents/
+AGENTS.md
+.github/workflows/antigravity-review.yml
+Job-auto/*.egg-info/
+desktop/dist-package-verify/
+
+

@@ -1,0 +1,97 @@
+{
+  "name": "job-auto-desktop",
+  "version": "1.8.0",
+  "description": "Job-auto Out-of-the-Box Desktop App (Scheme I Arc-Plum UI + Lazy Python Sidecar + Collector Extension)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "build": "electron-builder --win portable nsis"
+  },
+  "devDependencies": {
+    "electron": "^35.1.5",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.jobauto.desktop",
+    "productName": "Job-auto",
+    "asar": true,
+    "compression": "maximum",
+    "electronLanguages": [
+      "en-US",
+      "zh-CN"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "LI-11230930",
+        "repo": "Job-auto"
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "splash.html",
+      "assets/**",
+      "package.json",
+      "!dist/**"
+    ],
+    "extraResources": [
+      {
+        "from": "../Job-auto",
+        "to": "Job-auto",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/*.pyc",
+          "!**/*.egg-info/**",
+          "!**/tests/**"
+        ]
+      },
+      {
+        "from": "../extensions",
+        "to": "extensions",
+        "filter": [
+          "**/*",
+          "!**/*.log"
+        ]
+      },
+      {
+        "from": "../prompts",
+        "to": "prompts"
+      },
+      {
+        "from": "../config",
+        "to": "config",
+        "filter": [
+          "**/*",
+          "!user_config.yaml",
+          "!extensions.yaml"
+        ]
+      },
+      {
+        "from": "../.env.example",
+        "to": ".env.example"
+      },
+      {
+        "from": "../pyproject.toml",
+        "to": "pyproject.toml"
+      }
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "signAndEditExecutable": false,
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

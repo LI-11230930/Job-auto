@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JobMatchResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["score", "hard_filter_pass", "reasons", "gaps", "strategy"],
+  "properties": {
+    "score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "hard_filter_pass": {
+      "type": "boolean"
+    },
+    "reasons": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dimension", "jd_quote", "evidence", "impact"],
+        "properties": {
+          "dimension": { "type": "string" },
+          "jd_quote": { "type": "string" },
+          "evidence": { "type": "string" },
+          "impact": { "type": "string", "enum": ["positive", "neutral", "negative"] }
+        }
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "strategy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["focus_tags", "avoid_angles", "tailor_notes"],
+      "properties": {
+        "focus_tags": { "type": "array", "items": { "type": "string" } },
+        "avoid_angles": { "type": "array", "items": { "type": "string" } },
+        "tailor_notes": { "type": "string" }
+      }
+    }
+  }
+}

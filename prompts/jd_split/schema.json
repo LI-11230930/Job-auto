@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JdSplitResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["jobs"],
+  "properties": {
+    "jobs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["company", "title", "cities", "job_type", "jd_text", "apply_target", "deadline"],
+        "properties": {
+          "company": { "type": "string" },
+          "title": { "type": "string" },
+          "cities": { "type": "array", "items": { "type": "string" } },
+          "job_type": { "type": "string", "enum": ["校招", "实习", "社招", "未知"] },
+          "jd_text": { "type": "string" },
+          "apply_target": { "type": "string" },
+          "deadline": { "type": "string" }
+        }
+      }
+    }
+  }
+}
