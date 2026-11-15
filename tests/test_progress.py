@@ -10,7 +10,18 @@ from job_agent.progress import collect_live_db_metrics, update_progress_artifact
 from job_agent.sources.base import compute_dedup_hash
 
 
-def test_progress_dashboard_renders_live_db_metrics_and_csp(tmp_path: Path) -> None:
+def test_progress_dashboard_renders_live_db_metrics_and_csp(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setenv("JOB_AUTO_ROOT", str(tmp_path))
+    cfg_dir = tmp_path / "config"
+    cfg_dir.mkdir(parents=True, exist_ok=True)
+    (cfg_dir / "user_config.yaml").write_text(
+        "preferences:\n"
+        "  primary_cities: [\"太原\", \"山西\"]\n"
+        "  secondary_cities: [\"济南\", \"青岛\", \"西安\"]\n",
+        encoding="utf-8",
+    )
     db_path = tmp_path / "data" / "job_agent.db"
     db = Database(db_path)
     db.init_schema()

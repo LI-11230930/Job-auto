@@ -492,7 +492,8 @@ def update_progress_artifacts(
     """Refresh local/progress_data.json with live DB metrics and regenerate local/progress.html."""
     root = project_root or get_project_root()
     resolved_db = db_path or (root / "data" / "job_agent.db")
-    cfg = load_user_config()
+    cfg_override = root / "config" / "user_config.yaml"
+    cfg = load_user_config(cfg_override) if cfg_override.is_file() else load_user_config()
 
     local_dir = root / "local"
     local_dir.mkdir(parents=True, exist_ok=True)
