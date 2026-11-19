@@ -30,9 +30,10 @@ def _build_fallback_raw_tailor(profile: MasterProfile, focus_tags: list[str], jo
             scored_bullets.append((overlap, b.id, b.text))
     scored_bullets.sort(key=lambda x: x[0], reverse=True)
     chosen = [{"id": bid, "rewritten": txt} for _, bid, txt in scored_bullets[:10]]
+    skill_names = "、".join(s.name for s in profile.skills[:4] if s.name) or "常用办公与专业分析工具"
     summary = (
-        f"2027届{profile.education.major}{profile.education.degree}，"
-        "熟悉用友U8、金蝶云、金蝶EAS、畅捷通T+及Excel/Python财务数据处理。"
+        f"{profile.education.graduation_year}届{profile.education.major}{profile.education.degree}，"
+        f"熟悉{skill_names}。"
     )
     if job_type == "实习":
         summary += "求职财务/审计/ERP相关实习岗位。"
@@ -107,22 +108,32 @@ def build_qa_and_greeting(
         qa_out[item.question] = item.draft_answer
 
     eng = cfg.profile.english_status
-    qa_out["英语水平与四六级情况"] = (
-        f"暂未通过大学英语四级（CET-4 最高分 {eng.cet4_best_score or 418} 分），"
-        f"{eng.gaokao_english}；可熟练阅读中文财报与财务ERP系统文档。"
-    )
+    eng_parts: list[str] = []
+    if eng.cet6_passed:
+        eng_parts.append("已通过大学英语六级（CET-6）")
+    elif eng.cet4_passed:
+        eng_parts.append("已通过大学英语四级（CET-4）")
+    elif eng.cet4_best_score:
+        eng_parts.append(f"暂未通过大学英语四级（CET-4 最高分 {eng.cet4_best_score} 分）")
+    if eng.gaokao_english:
+        eng_parts.append(eng.gaokao_english)
+    eng_desc = "，".join(eng_parts) if eng_parts else "按个人真实档案与英语证书情况如实填写"
+    qa_out["英语水平与四六级情况"] = f"{eng_desc}；可熟练阅读中文财报与专业系统文档。"
 
     company = str(job.get("company") or "")
     title = str(job.get("title") or "")
+    skill_names = "、".join(s.name for s in profile.skills[:4] if s.name) or "专业核心工具与数据分析"
+    grad_yr = profile.education.graduation_year
     if job_type == "实习":
+        avail_txt = f"{cfg.profile.intern_availability}，" if cfg.profile.intern_availability else ""
         greeting = (
-            f"您好！我是2027届{profile.education.major}本科生，熟悉用友U8、金蝶云、金蝶EAS、畅捷通T+及Excel/Python，"
-            f"{cfg.profile.intern_availability}，非常希望能应聘{company}「{title}」实习岗位，随信附上定制简历。"
+            f"您好！我是{grad_yr}届{profile.education.major}{profile.education.degree}生，熟悉{skill_names}，"
+            f"{avail_txt}非常希望能应聘{company}「{title}」实习岗位，随信附上定制简历。"
         )
     else:
         greeting = (
-            f"您好！我是2027届{profile.education.major}本科生，具备多企业财务分析与ERP校内实训经历，"
-            f"熟练使用用友U8、金蝶云/EAS及Excel/Python，非常关注{company}「{title}」校招机会，附上针对性简历请查收。"
+            f"您好！我是{grad_yr}届{profile.education.major}{profile.education.degree}生，具备扎实专业实践与系统实训经历，"
+            f"熟悉{skill_names}，非常关注{company}「{title}」校招机会，附上针对性简历请查收。"
         )
     return qa_out, greeting
 
@@ -164,12 +175,17 @@ def build_package_for_match(
     factcheck_status = "blocked"
     retry_count = 0
 
+    extra_facts = (
+        str(cfg.profile.english_status.cet4_best_score or ""),
+        cfg.profile.english_status.gaokao_english,
+        cfg.profile.intern_availability if job_type == "实习" else "",
+    )
     for attempt in range(max_retries + 1):
         payload = dict(base_payload)
         if attempt > 0 and violations_log:
             payload["retry_feedback"] = violations_log[-1]
         tailored = llm.generate_json(asset=asset, payload=payload, model_override=model_used)
-        report = verify_tailored_resume(tailored, profile, job_type=job_type)
+        report = verify_tailored_resume(tailored, profile, job_type=job_type, extra_fact_texts=extra_facts)
         if report.passed:
             factcheck_status = "pass"
             break
@@ -179,7 +195,7 @@ def build_package_for_match(
         tailored = _build_fallback_raw_tailor(
             profile, strategy.get("focus_tags") or [], job_type=job_type
         )
-        fallback_report = verify_tailored_resume(tailored, profile, job_type=job_type)
+        fallback_report = verify_tailored_resume(tailored, profile, job_type=job_type, extra_fact_texts=extra_facts)
         factcheck_status = "fallback_raw" if fallback_report.passed else "blocked"
 
     pkg_dir = output_root / "packages" / _safe_folder_name(

@@ -109,7 +109,7 @@ def _seed_review_db(tmp_path: Path) -> tuple[Path, Path, int]:
         master_version_id=master_id,
         resume_pdf_path=str(pdf_path),
         diff_md_path=str(diff_path),
-        qa={"英语水平": "CET-4 最高分 418 分"},
+        qa={"英语水平": "CET-4 成绩按本机档案填写"},
         greeting="您好，申请贵所审计助理岗位。",
         retry_count=0,
         factcheck_status="pass",

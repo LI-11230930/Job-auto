@@ -157,7 +157,7 @@ def test_factcheck_blocks_hallucinated_numbers_tools_exaggerations_and_english()
     # Violation 1: fake bullet id + fake SAP + fake number 30% + forbidden "主导" + CET-4 fabrication + intern timing in campus role
     bad = verify_tailored_resume(
         {
-            "summary": "通过大学英语四级，最快12月14日到岗，熟悉SAP系统。",
+            "summary": "通过大学英语四级，最快下周到岗，熟悉SAP系统。",
             "selected": [
                 {"id": "b_fake_id", "rewritten": "测试"},
                 {"id": "b_erp_1", "rewritten": "主导企业实习中的ERP项目，效率提升30%"},
@@ -259,8 +259,8 @@ def test_stage2_end_to_end_match_retry_and_single_page_pdf(tmp_path: Path) -> No
 
     cfg = UserConfig()
     cfg.preferences.primary_cities = ["太原", "山西"]
-    cfg.profile.english_status.cet4_best_score = 418
-    cfg.profile.english_status.gaokao_english = "2023新高考二卷英语104分"
+    cfg.profile.english_status.cet4_best_score = 405
+    cfg.profile.english_status.gaokao_english = "高考英语良好"
 
     prompts_root = Path(__file__).resolve().parents[1] / "prompts"
     llm = _FakeStage2LLM()

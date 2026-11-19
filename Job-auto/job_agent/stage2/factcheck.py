@@ -123,6 +123,7 @@ def verify_tailored_resume(
     profile: MasterProfile,
     *,
     job_type: str = "校招",
+    extra_fact_texts: tuple[str, ...] = (),
 ) -> FactCheckReport:
     """Strictly verify tailored resume bullets and summary against MasterProfile (§6.3)."""
     violations: list[str] = []
@@ -134,7 +135,11 @@ def verify_tailored_resume(
         return FactCheckReport(False, "blocked", ["selected 列表为空，缺少有效要点。"])
 
     allowed_tools = _allowed_proper_nouns_lower(profile)
-    global_fact_nums: set[str] = {str(profile.education.graduation_year), "2027", "418", "104", "4"}
+    global_fact_nums: set[str] = (
+        {str(profile.education.graduation_year)}
+        | _extract_numeric_variants(" ".join(profile.certifications))
+        | _extract_numeric_variants(" ".join(x for x in extra_fact_texts if x))
+    )
 
     for idx, entry in enumerate(selected, start=1):
         if not isinstance(entry, dict):

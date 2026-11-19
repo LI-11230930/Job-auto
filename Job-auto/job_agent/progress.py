@@ -428,7 +428,7 @@ def default_progress_spec() -> dict[str, Any]:
             {
                 "title": "隐私与防幻觉门禁",
                 "state": "complete",
-                "detail": "PreToolUse 钩子拦截 .env/vault/private；所有定制简历与网申 QA 必须命中 master_v1.0 bullet_id，英语成绩如实写明 CET-4 最高 418（未过）与高考英语 104。",
+                "detail": "PreToolUse 钩子拦截 .env/vault/private；所有定制简历与网申 QA 必须命中 Master 档案要点，英语水平严格按本机 user_config 档案实事填写、禁止虚构。",
             },
             {
                 "title": "合规采集红线",
