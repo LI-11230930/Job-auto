@@ -56,7 +56,7 @@ function pageScrollStepAndProbe() {
     maxContainerHeight
   );
   const cardCount = document.querySelectorAll(
-    ".job-card-wrapper, li.job-card-box, .position-list__item, .joblist-box__item, .joblist-item, .j_joblist .e, [data-intern-id]"
+    ".job-card-wrapper, li.job-card-box, .position-list__item, .position-card, .joblist-box__item, .joblist-item, .j_joblist .e, .job-card, [data-intern-id]"
   ).length;
 
   return { gated, scrollHeight, cardCount };
@@ -155,23 +155,56 @@ function pageExtractAll(site) {
       }
     });
   } else if (site === "iguopin" || url.includes("iguopin.com")) {
-    document.querySelectorAll('a[href*="/job/detail/"]').forEach((a) => {
-      const card = a.closest('div[class*="item"], li, .el-card') || a.parentElement?.parentElement;
-      if (!card) return;
+    document.querySelectorAll(".job-card").forEach((el) => {
       const title = clean(
-        card.querySelector('[class*="job-name"], [class*="title"], h3, h4')?.textContent ||
-          a.textContent
+        (
+          el.querySelector(".job-name") ||
+          el.querySelector('[class*="job-name"]') ||
+          el.querySelector('[class*="title"], h3, h4')
+        )?.textContent
       );
       const company = clean(
-        card.querySelector('[class*="company"], [class*="corp"], [class*="org"]')?.textContent
+        el.querySelector(
+          'a.company-name, .company-name, .department-name, [class*="company"], [class*="corp"], [class*="org"]'
+        )?.textContent
       );
       const city = clean(
-        card.querySelector('[class*="city"], [class*="area"], [class*="location"]')?.textContent
-      );
+        el.querySelector('.job-district, [class*="district"], [class*="city"], [class*="area"], [class*="location"]')
+          ?.textContent
+      ).replace(/[「」\[\]()]/g, "");
+      const salary = clean(el.querySelector('.job-salary, [class*="salary"]')?.textContent);
+      const tags = Array.from(
+        el.querySelectorAll(".job-info .tag-item, .job-tag .ant-tag, .company-info .company-info-item")
+      )
+        .map((t) => clean(t.textContent))
+        .filter(Boolean)
+        .slice(0, 8);
+      const trackerId = clean(el.getAttribute("data-tracker"));
+      const a = el.querySelector('a[href*="/job/detail"]');
+      const jobUrl = a?.href || (trackerId ? `https://www.iguopin.com/job/detail?id=${trackerId}` : url);
       if (title && company) {
-        cards.push({ title, company, city, salary: "", tags: [], url: a.href || url });
+        cards.push({ title, company, city, salary, tags, url: jobUrl });
       }
     });
+    if (cards.length === 0) {
+      document.querySelectorAll('a[href*="/job/detail/"]').forEach((a) => {
+        const card = a.closest('div[class*="item"], li, .el-card') || a.parentElement?.parentElement;
+        if (!card) return;
+        const title = clean(
+          card.querySelector('[class*="job-name"], [class*="title"], h3, h4')?.textContent ||
+            a.textContent
+        );
+        const company = clean(
+          card.querySelector('[class*="company"], [class*="corp"], [class*="org"]')?.textContent
+        );
+        const city = clean(
+          card.querySelector('[class*="city"], [class*="area"], [class*="location"]')?.textContent
+        ).replace(/[「」\[\]()]/g, "");
+        if (title && company) {
+          cards.push({ title, company, city, salary: "", tags: [], url: a.href || url });
+        }
+      });
+    }
   } else if (site === "shixiseng" || url.includes("shixiseng.com")) {
     document.querySelectorAll(".intern-wrap, [data-intern-id]").forEach((el) => {
       const a = el.querySelector("a.title, a[href*='/intern/']");

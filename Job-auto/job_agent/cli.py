@@ -370,6 +370,12 @@ def cmd_run_stage2(
             mark_filtered_out=False,
             job_type_filter=job_type,
         )
+        from .company_check import filter_and_verify_prefilter_candidates
+
+        candidate_jobs, cc_stats = filter_and_verify_prefilter_candidates(
+            db, cfg, candidates_with_meta, root=root
+        )
+
         provider = build_llm_provider(cfg)
         prompts_root = root / "prompts"
         match_stats = run_match_batch(
@@ -377,7 +383,7 @@ def cmd_run_stage2(
             cfg=cfg,
             llm=provider,
             prompts_root=prompts_root,
-            candidates=[j for j, _ in candidates_with_meta],
+            candidates=candidate_jobs,
             master_version_id=master_id,
             profile=profile,
         )
@@ -405,6 +411,7 @@ def cmd_run_stage2(
 
         combined = {
             "prefilter": pf_stats,
+            "company_check": cc_stats,
             "match": {k: v for k, v in match_stats.items() if k != "high_score_match_ids"},
             "packages_built": len(built_packages),
         }
@@ -549,6 +556,7 @@ def cmd_digest(db_path: Path, *, min_score: int, top_n: int, send_email: bool) -
         output_dir=root / "output" / "digest",
         min_score=min_score,
         top_n=top_n,
+        cfg=cfg,
     )
     reminders = collect_reminders(db)
     report = build_weekly_report(db, write_files=False)

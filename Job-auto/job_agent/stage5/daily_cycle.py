@@ -231,12 +231,18 @@ def run_daily_cycle(
                 master_id = int(master_row["id"])
                 provider = llm_provider or build_llm_provider(resolved_cfg, project_root=root)
 
+                from ..company_check import filter_and_verify_prefilter_candidates
+
+                candidate_jobs, cc_stats = filter_and_verify_prefilter_candidates(
+                    db, resolved_cfg, candidates_with_meta, root=root
+                )
+
                 match_stats = run_match_batch(
                     db=db,
                     cfg=resolved_cfg,
                     llm=provider,
                     prompts_root=resolved_prompts,
-                    candidates=[j for j, _ in candidates_with_meta],
+                    candidates=candidate_jobs,
                     master_version_id=master_id,
                     profile=profile,
                 )
@@ -263,6 +269,7 @@ def run_daily_cycle(
 
                 stage2_summary = {
                     "skipped": False,
+                    "company_check": cc_stats,
                     "match": {k: v for k, v in match_stats.items() if k != "high_score_match_ids"},
                     "packages_built": built_count,
                 }
@@ -280,6 +287,7 @@ def run_daily_cycle(
             output_dir=resolved_output / "digest",
             min_score=resolved_cfg.scoring.min_score_for_package,
             top_n=resolved_cfg.scoring.daily_top_n,
+            cfg=resolved_cfg,
         )
         steps["digest"] = {
             "digest_path": digest["digest_path"],

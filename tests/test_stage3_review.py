@@ -129,6 +129,7 @@ def _seed_review_db(tmp_path: Path) -> tuple[Path, Path, int]:
 
 
 def test_review_workbench_flow_and_digest(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("JOB_AUTO_ROOT", str(tmp_path))
     db_path, out_dir, pkg_id = _seed_review_db(tmp_path)
     app = create_review_app(db_path=db_path, output_root=out_dir)
     client = TestClient(app)

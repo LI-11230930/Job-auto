@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import httpx
@@ -125,7 +125,7 @@ def _seed_stage5_db(tmp_path: Path) -> tuple[Path, Database]:
 
     dec1 = db.record_decision(package_id=pkg_ids[0], decision="approve")
     app1 = int(dec1["application_id"])
-    old_ts = (datetime.now(UTC) - timedelta(days=9)).isoformat(timespec="seconds")
+    old_ts = datetime(2026, 11, 4, 12, 0, tzinfo=UTC).isoformat(timespec="seconds")
     with db.connect() as conn:
         conn.execute(
             "UPDATE applications SET status = '已投递', submitted_at = ?, updated_at = ? WHERE id = ?",

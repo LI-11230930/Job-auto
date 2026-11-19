@@ -311,8 +311,12 @@ def push_packages_to_relay(
         decision_filter=decision_filter,
         job_type_filter="all",
         min_score=0,
-        limit=bounded_limit,
+        limit=bounded_limit * 3 if cfg.preferences.custom_filter.enabled else bounded_limit,
     )
+    if cfg.preferences.custom_filter.enabled:
+        from .filters import matches_custom_filter
+
+        packages = [pkg for pkg in packages if matches_custom_filter(pkg, cfg)][:bounded_limit]
     items = [_serialize_package_for_relay(pkg) for pkg in packages]
     packet = {
         "schema": "job-auto.relay.batch.v1",

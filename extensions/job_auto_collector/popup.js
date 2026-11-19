@@ -19,16 +19,22 @@ function clickNextPageInTab(site) {
   const selectorsBySite = {
     zhipin: [".options-pages a.next:not(.disabled)", "a i.ui-icon-arrow-right"],
     "51job": [".el-pagination button.btn-next:not([disabled])", "li.next:not(.disabled) a"],
-    iguopin: [".el-pagination button.btn-next:not([disabled])"],
+    iguopin: [
+      ".ant-pagination-next:not(.ant-pagination-disabled):not([aria-disabled='true']) button",
+      "li[title='下一页'][aria-disabled='false'] button",
+      ".ant-pagination-next:not(.ant-pagination-disabled):not([aria-disabled='true'])",
+      ".el-pagination button.btn-next:not([disabled])",
+    ],
     zhaopin: [".soupager a.btn:last-child", "button.btn-next:not([disabled])", ".el-pagination button.btn-next:not([disabled])"],
   };
   const candidates = selectorsBySite[site] || [
+    ".ant-pagination-next:not(.ant-pagination-disabled):not([aria-disabled='true']) button",
     ".el-pagination button.btn-next:not([disabled])",
     "a.next:not(.disabled)",
   ];
   for (const sel of candidates) {
     const el = document.querySelector(sel);
-    if (el) {
+    if (el && !el.closest(".ant-pagination-disabled, [aria-disabled='true']")) {
       const target = el.tagName === "I" && el.parentElement ? el.parentElement : el;
       target.scrollIntoView({ block: "center" });
       target.click();
@@ -136,35 +142,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     healthBadge.textContent = `已连接 ${portLabel}`;
     healthBadge.className = "badge ok";
     dbCountEl.textContent = String(health.data?.total_in_db ?? "-");
-    const bundleResp = await sendBgMessage({ type: "GET_AUTOFILL_BUNDLE" });
-    if (bundleResp.ok && bundleResp.data) {
-      autofillBundle = bundleResp.data;
-      autofillProfileSel.replaceChildren();
-      (autofillBundle.profiles || []).forEach((prof, idx) => {
-        const opt = document.createElement("option");
-        opt.value = String(idx);
-        opt.textContent = prof.name || prof.id || `档案 ${idx + 1}`;
-        autofillProfileSel.appendChild(opt);
-      });
-      if (!(autofillBundle.profiles || []).length) {
-        const opt = document.createElement("option");
-        opt.value = "";
-        opt.textContent = "未发现档案，请先在设置导入简历";
-        autofillProfileSel.appendChild(opt);
+    try {
+      const bundleResp = await sendBgMessage({ type: "GET_AUTOFILL_BUNDLE" });
+      if (bundleResp.ok && bundleResp.data) {
+        autofillBundle = bundleResp.data;
+        autofillProfileSel.replaceChildren();
+        (autofillBundle.profiles || []).forEach((prof, idx) => {
+          const opt = document.createElement("option");
+          opt.value = String(idx);
+          opt.textContent = prof.name || prof.id || `档案 ${idx + 1}`;
+          autofillProfileSel.appendChild(opt);
+        });
+        if (!(autofillBundle.profiles || []).length) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "未发现档案，请先在设置导入简历";
+          autofillProfileSel.appendChild(opt);
+        }
+        autofillPkgSel.replaceChildren();
+        const emptyOpt = document.createElement("option");
+        emptyOpt.value = "";
+        emptyOpt.textContent = "仅填基础档案（不绑定特定岗位话术）";
+        autofillPkgSel.appendChild(emptyOpt);
+        (autofillBundle.packages || []).forEach((pkg, idx) => {
+          const opt = document.createElement("option");
+          opt.value = String(idx);
+          opt.textContent = `${pkg.company} · ${pkg.title} (${pkg.score}分)`;
+          autofillPkgSel.appendChild(opt);
+        });
+        btnAutofillPage.disabled = !(autofillBundle.profiles || []).length;
+        btnCopyGreeting.disabled = !(autofillBundle.packages || []).length;
       }
-      autofillPkgSel.replaceChildren();
-      const emptyOpt = document.createElement("option");
-      emptyOpt.value = "";
-      emptyOpt.textContent = "仅填基础档案（不绑定特定岗位话术）";
-      autofillPkgSel.appendChild(emptyOpt);
-      (autofillBundle.packages || []).forEach((pkg, idx) => {
-        const opt = document.createElement("option");
-        opt.value = String(idx);
-        opt.textContent = `${pkg.company} · ${pkg.title} (${pkg.score}分)`;
-        autofillPkgSel.appendChild(opt);
-      });
-      btnAutofillPage.disabled = !(autofillBundle.profiles || []).length;
-      btnCopyGreeting.disabled = !(autofillBundle.packages || []).length;
+    } catch (_) {
+      // Do not block collection buttons if autofill bundle fails to load
     }
   } else {
     healthBadge.textContent = "未启动服务";

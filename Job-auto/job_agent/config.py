@@ -39,6 +39,42 @@ class ProfileConfig(BaseModel):
     vault_dir: str = "./vault"
 
 
+class CustomFilterRule(BaseModel):
+    id: str = ""
+    name: str = ""
+    enabled: bool = True
+    field: Literal[
+        "any_text",
+        "title",
+        "company",
+        "city",
+        "job_type",
+        "apply_channel",
+        "source",
+        "factcheck_status",
+    ] = "any_text"
+    match_mode: Literal["single", "multi_any", "multi_all"] = "multi_any"
+    values: list[str] = Field(default_factory=list)
+    action: Literal["add", "deduct", "require", "exclude"] = "add"
+    score: int = Field(default=20, ge=0, le=200)
+
+
+class CustomFilterConfig(BaseModel):
+    enabled: bool = False
+    mode: Literal["override", "blend"] = "override"
+    base_score: int = Field(default=0, ge=0, le=100)
+    min_display_score: int = Field(default=0, ge=0, le=200)
+    rules: list[CustomFilterRule] = Field(default_factory=list)
+    city_scope: Literal["all", "primary_only", "primary_and_secondary", "allow_nationwide"] = "all"
+    custom_cities: list[str] = Field(default_factory=list)
+    job_types: list[str] = Field(default_factory=list)
+    apply_channels: list[str] = Field(default_factory=list)
+    factcheck_statuses: list[str] = Field(default_factory=list)
+    sources: list[str] = Field(default_factory=list)
+    include_keywords: list[str] = Field(default_factory=list)
+    excluded_keywords: list[str] = Field(default_factory=list)
+
+
 class PreferencesConfig(BaseModel):
     target_job_types: list[str] = Field(default_factory=lambda: ["校招", "实习"])
     primary_cities: list[str] = Field(default_factory=list)
@@ -46,6 +82,7 @@ class PreferencesConfig(BaseModel):
     preferred_industries: list[str] = Field(default_factory=list)
     excluded_companies: list[str] = Field(default_factory=list)
     excluded_keywords: list[str] = Field(default_factory=lambda: ["销售", "电销", "催收", "兼职"])
+    custom_filter: CustomFilterConfig = Field(default_factory=CustomFilterConfig)
 
 
 class ScoringWeights(BaseModel):
@@ -133,6 +170,19 @@ class CloudRelayConfig(BaseModel):
     auto_fallback_to_email: bool = True
 
 
+class CompanyCheckConfig(BaseModel):
+    """Direct Streamable-HTTP MCP company risk verification (Tianyancha / Qichacha)."""
+
+    enabled: bool = False
+    provider: Literal["none", "tianyancha_mcp", "qichacha_mcp", "custom_mcp"] = "tianyancha_mcp"
+    mcp_url: str = ""
+    api_key_env: str = "TYC_MCP_API_KEY"
+    cache_days: int = Field(default=30, ge=1, le=365)
+    min_score_to_check: int = Field(default=60, ge=0, le=200)
+    auto_reject_severe_risk: bool = True
+    max_companies_per_run: int = Field(default=30, ge=1, le=200)
+
+
 class UserConfig(BaseModel):
     data_sources: DataSourcesConfig = Field(default_factory=DataSourcesConfig)
     profile: ProfileConfig = Field(default_factory=ProfileConfig)
@@ -142,6 +192,7 @@ class UserConfig(BaseModel):
     delivery: DeliveryConfig = Field(default_factory=DeliveryConfig)
     notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)
     cloud_relay: CloudRelayConfig = Field(default_factory=CloudRelayConfig)
+    company_check: CompanyCheckConfig = Field(default_factory=CompanyCheckConfig)
 
 
 def get_code_root() -> Path:

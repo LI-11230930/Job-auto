@@ -143,10 +143,62 @@ def evaluate_job_prefilter(
     allow_nationwide: bool = False,
 ) -> PrefilterOutcome:
     """Deterministically screen one job before spending LLM tokens."""
+    from ..filters import evaluate_custom_rules
+
+    cf = cfg.preferences.custom_filter
+    active_custom_rules = [
+        r for r in cf.rules if r.enabled and [v for v in r.values if str(v).strip()]
+    ]
+
+    company = str(job.get("company") or "").strip()
+    if any(ex in company for ex in cfg.preferences.excluded_companies):
+        return PrefilterOutcome(False, "mismatch", 0, "company_excluded")
+
+    is_restricted, restricted_reason = is_restricted_university_portal(
+        source=str(job.get("source") or ""),
+        url=str(job.get("url") or ""),
+        jd_text=str(job.get("jd_text") or ""),
+        apply_channel=str(job.get("apply_channel") or ""),
+        apply_target=str(job.get("apply_target") or ""),
+    )
+    if is_restricted:
+        return PrefilterOutcome(
+            False, "restricted_portal", 0, f"restricted_university_portal:{restricted_reason}"
+        )
+
+    # Full user-controlled override mode: evaluate strictly via user's own criterion rules & threshold
+    if cf.enabled and cf.mode == "override" and active_custom_rules:
+        eval_res = evaluate_custom_rules(job, cfg)
+        return PrefilterOutcome(
+            bool(eval_res["passed"]),
+            "custom",
+            int(eval_res["effective_score"]),
+            str(eval_res["reject_reason"] or ""),
+        )
+
     job_type = str(job.get("job_type") or "").strip()
-    allowed_types = set(cfg.preferences.target_job_types)
-    if job_type not in allowed_types:
+    allowed_types = (
+        {normalize_job_type_filter(t) for t in cf.job_types if str(t).strip()} - {"all"}
+        if (cf.enabled and cf.job_types)
+        else set(cfg.preferences.target_job_types)
+    )
+    if allowed_types and job_type not in allowed_types:
         return PrefilterOutcome(False, "mismatch", 0, f"job_type_excluded:{job_type}")
+
+    if cf.enabled and cf.sources:
+        raw_src = str(job.get("source") or "").strip().lower()
+        allowed_src = {s.strip().lower() for s in cf.sources if str(s).strip()}
+        src_ok = (raw_src in allowed_src) or (
+            "campus_site" in allowed_src and (raw_src.startswith("campus_site") or raw_src == "manual")
+        )
+        if not src_ok:
+            return PrefilterOutcome(False, "mismatch", 0, f"source_excluded:{raw_src}")
+
+    if cf.enabled and cf.apply_channels:
+        allowed_ch = {c.strip().lower() for c in cf.apply_channels if str(c).strip()}
+        ch_val = str(job.get("apply_channel") or "").strip().lower()
+        if allowed_ch and ch_val not in allowed_ch:
+            return PrefilterOutcome(False, "mismatch", 0, f"channel_excluded:{ch_val}")
 
     company = str(job.get("company") or "").strip()
     if any(ex in company for ex in cfg.preferences.excluded_companies):
@@ -169,11 +221,21 @@ def evaluate_job_prefilter(
     title_low = title.lower()
     joined_low = f"{company} {title} {jd_text}".lower()
 
-    for kw in cfg.preferences.excluded_keywords:
+    excluded_kws = (
+        [*cfg.preferences.excluded_keywords, *cf.excluded_keywords]
+        if cf.enabled
+        else list(cfg.preferences.excluded_keywords)
+    )
+    for kw in excluded_kws:
         if kw and kw.lower() in title_low:
             return PrefilterOutcome(False, "mismatch", 0, f"excluded_keyword:{kw}")
 
-    # City tiering (Shanxi primary > Jinan/Qingdao/Xian secondary > nationwide)
+    if cf.enabled and cf.include_keywords:
+        inc_kws = [k.strip().lower() for k in cf.include_keywords if k.strip()]
+        if inc_kws and not any(k in joined_low for k in inc_kws):
+            return PrefilterOutcome(False, "mismatch", 0, "missing_include_keyword")
+
+    # City tiering (custom filter overrides if enabled)
     raw_cities = job.get("cities")
     if raw_cities is None and "cities_json" in job:
         try:
@@ -182,8 +244,16 @@ def evaluate_job_prefilter(
             raw_cities = []
     city_blob = " ".join(str(c) for c in (raw_cities or []))
 
-    primary_tokens = [c.strip() for c in cfg.preferences.primary_cities if c.strip()]
-    secondary_tokens = [c.strip() for c in cfg.preferences.secondary_cities if c.strip()]
+    custom_cities = [c.strip() for c in cf.custom_cities if str(c).strip()] if cf.enabled else []
+    primary_tokens = custom_cities or [c.strip() for c in cfg.preferences.primary_cities if c.strip()]
+    secondary_tokens = (
+        []
+        if (cf.enabled and cf.city_scope == "primary_only")
+        else [c.strip() for c in cfg.preferences.secondary_cities if c.strip()]
+    )
+    effective_nationwide = allow_nationwide or (
+        cf.enabled and cf.city_scope in {"all", "allow_nationwide"}
+    )
 
     if any(tok in city_blob for tok in primary_tokens):
         city_tier = "primary"
@@ -191,7 +261,10 @@ def evaluate_job_prefilter(
     elif any(tok in city_blob for tok in secondary_tokens):
         city_tier = "secondary"
         city_bonus = 18
-    elif allow_nationwide and (not raw_cities or "全国" in city_blob or "不限" in city_blob):
+    elif cf.enabled and cf.city_scope == "all" and not custom_cities:
+        city_tier = "nationwide"
+        city_bonus = 10
+    elif effective_nationwide and (not raw_cities or "全国" in city_blob or "不限" in city_blob):
         city_tier = "nationwide"
         city_bonus = 8
     else:

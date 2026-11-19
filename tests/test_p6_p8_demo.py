@@ -47,7 +47,8 @@ def test_cloud_relay_aes_gcm_roundtrip_and_tamper_detection() -> None:
 
     # Tampered ciphertext must fail authentication tag check
     tampered = dict(envelope)
-    tampered["ciphertext"] = "A" + envelope["ciphertext"][1:]
+    first_char = "B" if envelope["ciphertext"].startswith("A") else "A"
+    tampered["ciphertext"] = first_char + envelope["ciphertext"][1:]
     with pytest.raises((InvalidTag, ValueError)):
         open_payload(tampered, "super-secret-passphrase-123")
 
@@ -179,9 +180,9 @@ def test_scheme_i_ui_tokens_zero_telemetry_and_js_syntax(
     assert "零第三方统计" in html
     assert "一键载入示例体验数据" in html
     assert "ctrl+k" in html.lower()
-    # Five independent top-level pages inside App; Progress page must NOT be in App Slim Rail
+    # Six independent top-level pages inside App; Progress page must NOT be in App Slim Rail
     assert 'href="/progress"' not in html
-    for page_id in ("page-review", "page-inbox", "page-queue", "page-insights", "page-settings"):
+    for page_id in ("page-review", "page-inbox", "page-queue", "page-insights", "page-data", "page-settings"):
         assert f'id="{page_id}"' in html
     assert "msg-row" in html
     assert "queue-flat-card" in html

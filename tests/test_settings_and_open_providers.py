@@ -382,3 +382,368 @@ def test_app_first_notifications_mobile_push_and_email_fallback(
     assert r_read.status_code == 200
     assert r_read.json()["unread_count"] == 0
 
+
+def test_global_custom_filter_settings_api_packages_prefilter_and_relay(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setenv("JOB_AUTO_ROOT", str(tmp_path))
+    from fastapi.testclient import TestClient
+
+    from job_agent.cloud_relay import push_packages_to_relay
+    from job_agent.config import UserConfig
+    from job_agent.db import Database
+    from job_agent.demo_seed import seed_demo_workspace
+    from job_agent.stage2.prefilter import evaluate_job_prefilter
+    from job_agent.stage3.review_server import create_review_app
+
+    db_path = tmp_path / "data" / "job_agent.db"
+    db = Database(db_path)
+    out_root = tmp_path / "output"
+    seed_demo_workspace(db, output_root=out_root)
+
+    app = create_review_app(db_path=db_path, output_root=out_root)
+    client = TestClient(app)
+
+    # Review HTML contains Custom Filter controls inside Settings -> Prefs
+    html_res = client.get("/review")
+    assert html_res.status_code == 200
+    assert "cfgCfEnabled" in html_res.text
+    assert "btnSaveCustomFilter" in html_res.text
+    assert "globalFilterBanner" in html_res.text
+
+    # Before enabling global filter, all 3 demo packages are returned
+    r_all = client.get("/api/packages")
+    assert r_all.status_code == 200
+    assert len(r_all.json()["packages"]) == 3
+    assert r_all.json()["global_filter_active"] is False
+
+    # Enable global custom filter: single-select score >= 90 & city_scope=primary_only, multi-select cities=["杭州", "青岛"] & job_types=["校招"]
+    r_save = client.post(
+        "/api/system/settings",
+        json={
+            "preferences": {
+                "custom_filter": {
+                    "enabled": True,
+                    "min_display_score": 90,
+                    "city_scope": "primary_only",
+                    "custom_cities": ["杭州", "青岛"],
+                    "job_types": ["校招"],
+                    "apply_channels": ["company_portal", "email"],
+                    "factcheck_statuses": ["pass"],
+                    "sources": ["demo_sample"],
+                    "include_keywords": ["会计", "审计"],
+                    "excluded_keywords": ["驻外"],
+                }
+            }
+        },
+    )
+    assert r_save.status_code == 200
+
+    # Verify roundtrip read from GET /api/system/settings
+    r_get = client.get("/api/system/settings")
+    assert r_get.status_code == 200
+    cf = r_get.json()["preferences"]["custom_filter"]
+    assert cf["enabled"] is True
+    assert cf["min_display_score"] == 90
+    assert cf["city_scope"] == "primary_only"
+    assert cf["custom_cities"] == ["杭州", "青岛"]
+    assert cf["job_types"] == ["校招"]
+    assert cf["include_keywords"] == ["会计", "审计"]
+
+    # Now GET /api/packages enforces global custom filter (excludes 88-pt intern demo-003)
+    r_filtered = client.get("/api/packages")
+    assert r_filtered.status_code == 200
+    body = r_filtered.json()
+    assert body["global_filter_active"] is True
+    assert "≥90分" in body["global_filter_summary"]
+    assert len(body["packages"]) == 2
+    assert all(int(p["score"]) >= 90 and p["job_type"] == "校招" for p in body["packages"])
+
+    # Switch to single-select only email channel -> only 1 package remains
+    client.post(
+        "/api/system/settings",
+        json={"preferences": {"custom_filter": {"apply_channels": ["email"]}}},
+    )
+    r_email_only = client.get("/api/packages")
+    assert len(r_email_only.json()["packages"]) == 1
+    assert r_email_only.json()["packages"][0]["apply_channel"] == "email"
+
+    # E2EE Cloud Relay push also respects active global custom filter
+    cfg_obj = UserConfig.model_validate({"preferences": client.get("/api/system/settings").json()["preferences"]})
+    # Reset apply_channels to company_portal so pending demo-001 matches while pending demo-003 (intern 88) does not
+    cfg_obj.preferences.custom_filter.apply_channels = ["company_portal"]
+    relay_res = push_packages_to_relay(db, cfg_obj, limit=10, decision_filter="pending", project_root=tmp_path)
+    assert relay_res["pushed_count"] == 1
+
+    # Stage 2 prefilter respects custom_filter (excludes missing include_keyword / excluded_keywords / job_type / city)
+    ok_res = evaluate_job_prefilter(
+        {
+            "company": "示例集团",
+            "title": "财务会计专员",
+            "job_type": "校招",
+            "cities": ["杭州"],
+            "source": "demo_sample",
+            "apply_channel": "company_portal",
+            "jd_text": "会计学 校招",
+        },
+        cfg_obj,
+    )
+    assert ok_res.rule_pass is True
+    bad_kw = evaluate_job_prefilter(
+        {
+            "company": "示例集团",
+            "title": "驻外财务会计专员",
+            "job_type": "校招",
+            "cities": ["杭州"],
+            "source": "demo_sample",
+            "apply_channel": "company_portal",
+            "jd_text": "会计学 校招",
+        },
+        cfg_obj,
+    )
+    assert bad_kw.rule_pass is False
+
+
+def test_user_defined_rule_scoring_override_and_data_dashboard(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setenv("JOB_AUTO_ROOT", str(tmp_path))
+    from fastapi.testclient import TestClient
+
+    from job_agent.config import UserConfig
+    from job_agent.db import Database
+    from job_agent.demo_seed import seed_demo_workspace
+    from job_agent.stage2.prefilter import evaluate_job_prefilter
+    from job_agent.stage3.review_server import create_review_app
+
+    db_path = tmp_path / "data" / "job_agent.db"
+    db = Database(db_path)
+    out_root = tmp_path / "output"
+    seed_demo_workspace(db, output_root=out_root)
+
+    app = create_review_app(db_path=db_path, output_root=out_root)
+    client = TestClient(app)
+
+    # 1. Settings exposes reference filter templates + new rule builder UI + 数据 page
+    r_init = client.get("/api/system/settings")
+    assert r_init.status_code == 200
+    refs = r_init.json().get("filter_reference_templates") or []
+    assert len(refs) >= 5
+    assert any(tpl.get("id") == "ref_city" for tpl in refs)
+
+    html = client.get("/review").text
+    assert "page-data" in html
+    assert "btnTopData" in html
+    assert "btnAddCfRule" in html
+    assert "cfReferenceList" in html
+    assert "btnLoadRefTemplate" in html
+
+    # 2. Save user-defined scoring rules in override mode (non-finance custom criteria allowed)
+    r_save = client.post(
+        "/api/system/settings",
+        json={
+            "preferences": {
+                "custom_filter": {
+                    "enabled": True,
+                    "mode": "override",
+                    "base_score": 10,
+                    "min_display_score": 50,
+                    "city_scope": "all",
+                    "custom_cities": [],
+                    "job_types": [],
+                    "apply_channels": [],
+                    "factcheck_statuses": [],
+                    "sources": [],
+                    "include_keywords": [],
+                    "excluded_keywords": [],
+                    "rules": [
+                        {
+                            "id": "r_title",
+                            "name": "目标职能关键词",
+                            "enabled": True,
+                            "field": "title",
+                            "match_mode": "multi_any",
+                            "values": ["会计", "运营"],
+                            "action": "add",
+                            "score": 30,
+                        },
+                        {
+                            "id": "r_multi_all",
+                            "name": "双技能要求",
+                            "enabled": True,
+                            "field": "any_text",
+                            "match_mode": "multi_all",
+                            "values": ["Excel", "数据分析"],
+                            "action": "add",
+                            "score": 20,
+                        },
+                        {
+                            "id": "r_single_req",
+                            "name": "仅校招",
+                            "enabled": True,
+                            "field": "job_type",
+                            "match_mode": "single",
+                            "values": ["校招"],
+                            "action": "require",
+                            "score": 0,
+                        },
+                        {
+                            "id": "r_deduct",
+                            "name": "出差扣分",
+                            "enabled": True,
+                            "field": "any_text",
+                            "match_mode": "single",
+                            "values": ["频繁出差"],
+                            "action": "deduct",
+                            "score": 25,
+                        },
+                        {
+                            "id": "r_exclude",
+                            "name": "销售避坑",
+                            "enabled": True,
+                            "field": "title",
+                            "match_mode": "multi_any",
+                            "values": ["电销", "催收"],
+                            "action": "exclude",
+                            "score": 0,
+                        },
+                    ],
+                }
+            }
+        },
+    )
+    assert r_save.status_code == 200
+    saved_cf = client.get("/api/system/settings").json()["preferences"]["custom_filter"]
+    assert saved_cf["mode"] == "override"
+    assert saved_cf["base_score"] == 10
+    assert saved_cf["min_display_score"] == 50
+    assert len(saved_cf["rules"]) == 5
+
+    # 3. Verify GET /api/data/jobs-dashboard returns structured breakdowns + custom scoring hits
+    r_data = client.get("/api/data/jobs-dashboard?source=all&job_type=all&status=active&limit=50")
+    assert r_data.status_code == 200
+    dbody = r_data.json()
+    assert dbody["status"] == "ok"
+    assert dbody["summary"]["total_jobs"] == 3
+    assert dbody["summary"]["custom_filter_active"] is True
+    assert dbody["summary"]["packages_count"] == 3
+    assert len(dbody["breakdowns"]["by_source"]) >= 1
+    assert len(dbody["breakdowns"]["top_cities"]) >= 1
+    assert len(dbody["jobs"]) == 3
+
+    # Search filter & only_custom_matched toggle
+    r_q = client.get("/api/data/jobs-dashboard?q=demo_nonexistent_xyz")
+    assert r_q.status_code == 200
+    assert len(r_q.json()["jobs"]) == 0
+
+    r_only_match = client.get("/api/data/jobs-dashboard?only_custom_matched=true")
+    assert r_only_match.status_code == 200
+    assert all(j["custom_passed"] for j in r_only_match.json()["jobs"])
+
+    # 4. Verify Stage 2 prefilter delegates to custom rules in override mode (even for non-finance title!)
+    cfg_obj = UserConfig.model_validate({"preferences": client.get("/api/system/settings").json()["preferences"]})
+    custom_pass = evaluate_job_prefilter(
+        {
+            "company": "星图数字科技有限公司",
+            "title": "商业运营管培生",
+            "job_type": "校招",
+            "cities": ["成都"],
+            "source": "iguopin",
+            "apply_channel": "company_portal",
+            "jd_text": "负责电商数据分析，熟练使用 Excel 与看板。",
+        },
+        cfg_obj,
+    )
+    assert custom_pass.rule_pass is True
+    assert custom_pass.city_tier == "custom"
+    # 10 (base) + 30 (运营) + 20 (Excel+数据分析) = 60 >= 50
+    assert custom_pass.rule_score_hint == 60
+
+    # Deduct rule drops score below 50: 60 - 25 = 35 < 50 -> fail
+    custom_deduct_fail = evaluate_job_prefilter(
+        {
+            "company": "星图数字科技有限公司",
+            "title": "商业运营管培生",
+            "job_type": "校招",
+            "cities": ["成都"],
+            "source": "iguopin",
+            "apply_channel": "company_portal",
+            "jd_text": "负责数据分析，熟练使用 Excel，需频繁出差。",
+        },
+        cfg_obj,
+    )
+    assert custom_deduct_fail.rule_pass is False
+
+    # Require rule failure rejects immediately
+    custom_req_fail = evaluate_job_prefilter(
+        {
+            "company": "星图数字科技有限公司",
+            "title": "商业运营实习生",
+            "job_type": "实习",
+            "cities": ["成都"],
+            "source": "iguopin",
+            "apply_channel": "company_portal",
+            "jd_text": "数据分析 Excel。",
+        },
+        cfg_obj,
+    )
+    assert custom_req_fail.rule_pass is False
+
+    # Exclude rule rejects immediately
+    custom_exc_fail = evaluate_job_prefilter(
+        {
+            "company": "星图数字科技有限公司",
+            "title": "运营电销专员",
+            "job_type": "校招",
+            "cities": ["成都"],
+            "source": "iguopin",
+            "apply_channel": "company_portal",
+            "jd_text": "数据分析 Excel。",
+        },
+        cfg_obj,
+    )
+    assert custom_exc_fail.rule_pass is False
+
+    # 5. Stale custom_cities with city_scope='all' & stale include_keywords in override+rules mode MUST NOT silently drop jobs,
+    #    and empty cities=[] falls back to matching city token in job title; also digest & packages counts stay aligned.
+    from job_agent.config import CustomFilterRule
+    from job_agent.filters import evaluate_custom_rules
+    from job_agent.stage3.digest import build_daily_digest
+
+    cfg_stale = UserConfig.model_validate({"preferences": client.get("/api/system/settings").json()["preferences"]})
+    cfg_stale.preferences.custom_filter.city_scope = "all"
+    cfg_stale.preferences.custom_filter.custom_cities = ["太原"]
+    cfg_stale.preferences.custom_filter.include_keywords = ["不存在的词"]
+    cfg_stale.preferences.custom_filter.rules.append(
+        CustomFilterRule(
+            id="r_city_fallback",
+            name="城市加分",
+            enabled=True,
+            field="city",
+            match_mode="multi_any",
+            values=["济南"],
+            action="add",
+            score=40,
+        )
+    )
+    ev_fallback = evaluate_custom_rules(
+        {
+            "company": "示例科技",
+            "title": "济南运营专员",
+            "job_type": "校招",
+            "cities": [],
+            "jd_text": "",
+        },
+        cfg_stale,
+    )
+    # 10 (base) + 30 (运营) + 40 (济南 fallback from title) = 80 >= 50
+    assert ev_fallback["passed"] is True
+    assert ev_fallback["custom_score"] == 80
+
+    # Digest filtered with cfg matches GET /api/packages count
+    dig = build_daily_digest(db, output_dir=out_root / "digest", min_score=80, top_n=20, cfg=cfg_obj)
+    pkgs_after = client.get("/api/packages").json()["packages"]
+    assert dig["packages_count"] == len(pkgs_after)
+
+
+

@@ -380,6 +380,75 @@ REVIEW_HTML = """<!DOCTYPE html>
   }
   .acc-body { display: none; padding: 14px 20px 18px; border-top: 1px solid #f3f4f6; background: #faf9fd; }
   .acc-card.open .acc-body { display: block; }
+
+  /* Custom Global Filter Builder Chips (Single-Select & Multi-Select) */
+  .cf-group { margin-bottom: 12px; padding: 10px 12px; background: #ffffff; border: 1px solid #ede9fe; border-radius: 10px; }
+  .cf-label { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; font-weight: 800; color: var(--ink); margin-bottom: 7px; }
+  .cf-mode-tag { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: #f3f0ff; color: var(--accent-ink); }
+  .cf-chip-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .cf-chip {
+    border: 1px solid #ddd6fe; background: #ffffff; color: #4b5563;
+    padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 120ms var(--ease-press); font-family: inherit;
+  }
+  .cf-chip:hover { border-color: var(--accent); color: var(--accent-ink); background: #faf7ff; }
+  .cf-chip.active { background: var(--accent); color: #ffffff; border-color: var(--accent); }
+  .cf-global-banner {
+    display: none; padding: 7px 12px; background: #f5f3ff; border-bottom: 1px solid var(--line);
+    font-size: 11.5px; color: var(--accent-ink); font-weight: 700; cursor: pointer;
+    justify-content: space-between; align-items: center; gap: 6px;
+  }
+  .cf-global-banner.show { display: flex; }
+  .cf-global-banner:hover { background: #ede9fe; }
+  .cf-split { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(270px, 1fr); gap: 14px; align-items: start; }
+  @media (max-width: 1080px) { .cf-split { grid-template-columns: 1fr; } }
+  .cf-rule-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .cf-rule-card {
+    background: #ffffff; border: 1px solid #ddd6fe; border-radius: 10px; padding: 10px;
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .cf-rule-row1, .cf-rule-row2 { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .cf-inp-sm {
+    border: 1px solid #d1d5db; border-radius: 7px; padding: 5px 8px; font-size: 12px;
+    font-family: inherit; background: #fff; color: var(--ink);
+  }
+  .cf-inp-sm:focus { outline: none; border-color: var(--accent); }
+  .cf-ref-box {
+    background: #faf7ff; border: 1px dashed #c4b5fd; border-radius: 12px; padding: 12px;
+  }
+  .cf-ref-item {
+    background: #ffffff; border: 1px solid #ede9fe; border-radius: 9px; padding: 8px 10px; margin-top: 8px;
+  }
+  .cf-ref-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .cf-ref-score { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: #ede9fe; color: #5b21b6; }
+  .cf-hits-line { margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; }
+  .cf-hit-tag { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 5px; background: #f3f0ff; color: #5b21b6; }
+
+  /* Independent Page: Data Breakdown Kanban (数据板块) */
+  .data-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .data-kpi-card {
+    background: #ffffff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+    box-shadow: 0 2px 8px rgba(46, 16, 101, 0.03);
+  }
+  .data-kpi-label { font-size: 11.5px; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+  .data-kpi-val { font-size: 22px; font-weight: 800; color: var(--rail); line-height: 1.2; }
+  .data-kpi-sub { font-size: 11px; color: var(--accent-ink); margin-top: 3px; font-weight: 600; }
+  .data-kanban-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+  @media (max-width: 1180px) { .data-kanban-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 680px) { .data-kanban-grid { grid-template-columns: 1fr; } }
+  .data-board-card { background: #ffffff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .data-board-title { font-size: 13px; font-weight: 800; color: var(--rail); margin-bottom: 9px; display: flex; justify-content: space-between; align-items: center; }
+  .data-bar-row { display: flex; flex-direction: column; gap: 3px; margin-bottom: 7px; cursor: pointer; padding: 2px 4px; border-radius: 6px; }
+  .data-bar-row:hover { background: #f5f3ff; }
+  .data-bar-meta { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 700; color: var(--ink); }
+  .data-bar-track { height: 6px; background: #f3f0ff; border-radius: 999px; overflow: hidden; }
+  .data-bar-fill { height: 100%; background: linear-gradient(90deg, var(--rail), var(--accent)); border-radius: 999px; }
+  .data-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .data-job-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--line); padding: 9px 4px;
+  }
+  .data-job-row:last-child { border-bottom: none; }
 </style>
 </head>
 <body>
@@ -391,6 +460,7 @@ REVIEW_HTML = """<!DOCTYPE html>
     <button class="rail-btn" data-rail="inbox" id="btnTopMessages"><span class="rail-ico">🔔</span><span>消息</span><span class="rail-badge" id="railMsgBadge">0</span></button>
     <button class="rail-btn" data-rail="queue" id="btnTopQueue"><span class="rail-ico">📋</span><span>看板</span></button>
     <button class="rail-btn" data-rail="insights" id="btnTopInsights"><span class="rail-ico">📊</span><span>复盘</span></button>
+    <button class="rail-btn" data-rail="data" id="btnTopData"><span class="rail-ico">🗂️</span><span>数据</span></button>
     <button class="rail-btn" data-rail="settings" id="btnTopSettings"><span class="rail-ico">⚙️</span><span>设置</span></button>
     <div class="rail-spacer"></div>
     <button class="rail-btn" id="btnCmdOpen" title="快捷键 Ctrl+K"><span class="rail-ico">⌘</span><span>命令</span></button>
@@ -441,6 +511,10 @@ REVIEW_HTML = """<!DOCTYPE html>
           <button class="chip" data-filter="later">暂缓</button>
           <button class="chip" data-filter="reject">已拒绝</button>
         </div>
+        <div class="cf-global-banner" id="globalFilterBanner" title="点击前往「设置 -> 求职偏好与筛选」调整全局自定义口径">
+          <span id="globalFilterBannerText">🎯 全局筛选生效中</span>
+          <span style="text-decoration:underline;flex-shrink:0;">修改口径</span>
+        </div>
         <div class="pkg-list" id="pkgList">
           <div class="skel-card"></div>
           <div class="skel-card"></div>
@@ -489,6 +563,10 @@ REVIEW_HTML = """<!DOCTYPE html>
             </div>
             <div id="dReasons" style="margin-top:10px;font-size:13px;line-height:1.55;"></div>
             <div id="dGaps" style="margin-top:6px;font-size:12.5px;color:var(--warn);"></div>
+            <div id="dCompanyRow" style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;">
+              <span id="dCompanyBadge" class="pill">🏢 企业工商背调：暂未核查</span>
+              <button type="button" class="btn btn-soft" id="btnVerifyCompanyNow" style="padding:4px 10px;font-size:12px;">🔍 查天眼查/企查查背调</button>
+            </div>
             <div class="detail-actions">
               <input id="decisionNote" class="note-input" placeholder="可选：记录审核备注/投递要点..." />
               <a id="dPdfDownload" class="btn btn-outline">下载简历</a>
@@ -582,7 +660,61 @@ REVIEW_HTML = """<!DOCTYPE html>
       </div>
     </section>
 
-    <!-- Independent Page 5: Settings (Left Category Nav + Right Accordion Cards) -->
+    <!-- Independent Page 5: Data (Captured Jobs Breakdown Kanban) -->
+    <section id="page-data" class="page-panel" aria-label="岗位数据拆解看板">
+      <div class="page-header-bar">
+        <div>
+          <div class="page-header-title"><span>🗂️ 岗位数据拆解看板</span></div>
+          <div id="dataSummary" class="page-header-sub">正在汇总当前账号采集的全部本地岗位数据...</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="btnDataExpand">一键抓取新岗位</button>
+          <button class="btn btn-soft" id="btnDataJumpRules">调整自定义筛选规则</button>
+          <button class="btn btn-outline" id="btnRefreshData">刷新数据看板</button>
+        </div>
+      </div>
+
+      <div id="dataKpiGrid" class="data-kpi-grid"></div>
+      <div id="dataKanbanGrid" class="data-kanban-grid"></div>
+
+      <div class="card">
+        <div class="data-toolbar">
+          <input id="dataSearchInput" class="cf-inp-sm" style="flex:1;min-width:190px;" placeholder="搜索企业名称 / 职位 / 城市..." />
+          <select id="dataSourceFilter" class="cf-inp-sm">
+            <option value="all">全部来源</option>
+            <option value="iguopin">国聘网</option>
+            <option value="zhaopin">智联招聘</option>
+            <option value="zhipin">Boss直聘</option>
+            <option value="51job">前程无忧</option>
+            <option value="ncss">国家24365</option>
+            <option value="shixiseng">实习僧</option>
+            <option value="campus_site">校招/手动</option>
+            <option value="demo_sample">示例演示</option>
+          </select>
+          <select id="dataTypeFilter" class="cf-inp-sm">
+            <option value="all">全部批次</option>
+            <option value="校招">校招</option>
+            <option value="实习">实习</option>
+            <option value="未知">未标注</option>
+          </select>
+          <select id="dataStatusFilter" class="cf-inp-sm">
+            <option value="active">仅活跃岗位</option>
+            <option value="all">全部状态</option>
+            <option value="filtered_out">已初筛过滤</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;cursor:pointer;">
+            <input id="dataOnlyCustomMatched" type="checkbox" />
+            <span>仅看自定义规则命中</span>
+          </label>
+          <button type="button" class="btn btn-soft" id="btnDataApplyFilter" style="padding:6px 12px;">查询</button>
+          <button type="button" class="btn btn-outline" id="btnDataResetFilter" style="padding:6px 10px;">重置</button>
+        </div>
+        <div id="dataJobsMeta" style="font-size:12px;color:var(--muted);margin-bottom:8px;">加载明细中...</div>
+        <div id="dataJobsRows"></div>
+      </div>
+    </section>
+
+    <!-- Independent Page 6: Settings (Left Category Nav + Right Accordion Cards) -->
     <section id="page-settings" class="page-panel" aria-label="系统与偏好设置">
       <div class="cfg-shell">
         <aside class="cfg-nav" id="cfgNav" aria-label="设置分类">
@@ -685,6 +817,67 @@ REVIEW_HTML = """<!DOCTYPE html>
                     <a class="btn btn-soft" href="/relay-mobile" target="_blank" rel="noopener">打开手机端零知识审阅页</a>
                   </div>
                   <pre id="cfgRelayPreviewBox" class="doc-box" style="display:none;font-size:11.5px;"></pre>
+                </div>
+              </div>
+
+              <div class="acc-card">
+                <div class="acc-hd">
+                  <div>
+                    <div class="acc-title">3. 企业工商风控背调 MCP（天眼查 / 企查查 · 0 大模型 Token 消耗）</div>
+                    <div class="acc-desc">AI 匹配与定制前直接通过 Streamable-HTTP MCP 核查高分候选企业工商存续与失信风险，本地缓存 30 天不重复扣额度。</div>
+                  </div>
+                  <span class="acc-toggle">+</span>
+                </div>
+                <div class="acc-body">
+                  <div class="cfg-field">
+                    <label style="display:flex;align-items:center;gap:8px;font-weight:800;cursor:pointer;">
+                      <input type="checkbox" id="cfgCcEnabled" />
+                      <span>在「AI 智能匹配与定制」前自动执行企业工商风控核查（不额外消耗 Gemini/LLM Token）</span>
+                    </label>
+                  </div>
+                  <div class="cfg-row2">
+                    <div class="cfg-field">
+                      <label for="cfgCcProvider">背调 MCP 服务商</label>
+                      <select id="cfgCcProvider" class="cfg-select"></select>
+                      <div id="cfgCcHint" class="cfg-hint"></div>
+                    </div>
+                    <div class="cfg-field">
+                      <label for="cfgCcUrl">Streamable-HTTP MCP 地址</label>
+                      <input id="cfgCcUrl" class="cfg-input" placeholder="https://mcp.tianyancha.com/v1" />
+                    </div>
+                  </div>
+                  <div class="cfg-row2">
+                    <div class="cfg-field">
+                      <label for="cfgCcKeyEnv">Key 环境变量名（写入本地 .env）</label>
+                      <input id="cfgCcKeyEnv" class="cfg-input" placeholder="TYC_MCP_API_KEY" />
+                    </div>
+                    <div class="cfg-field">
+                      <label for="cfgCcApiKey">API Key / Bearer Token（留空保持已保存的密钥）</label>
+                      <input id="cfgCcApiKey" type="password" class="cfg-input" placeholder="输入天眼查或企查查 MCP Key..." />
+                      <div id="cfgCcKeyState" class="cfg-hint"></div>
+                    </div>
+                  </div>
+                  <div class="cfg-row3">
+                    <div class="cfg-field">
+                      <label for="cfgCcMinScore">最低触发分数线（仅查高分岗省额度）</label>
+                      <input id="cfgCcMinScore" type="number" min="0" max="200" class="cfg-input" value="60" />
+                    </div>
+                    <div class="cfg-field">
+                      <label for="cfgCcCacheDays">本地缓存天数（同公司不重查）</label>
+                      <input id="cfgCcCacheDays" type="number" min="1" max="365" class="cfg-input" value="30" />
+                    </div>
+                    <div class="cfg-field" style="display:flex;align-items:flex-end;">
+                      <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;margin-bottom:8px;">
+                        <input type="checkbox" id="cfgCcAutoReject" checked />
+                        <span>注销/失信高危企业自动跳过定制</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn btn-primary" id="btnSaveCompanyCheck">保存企业背调配置</button>
+                    <button class="btn btn-soft" id="btnTestCompanyCheck">测试 MCP 连通与工具发现</button>
+                  </div>
+                  <div id="cfgCcTestResult" class="cfg-hint" style="margin-top:8px;"></div>
                 </div>
               </div>
             </div>
@@ -898,6 +1091,139 @@ REVIEW_HTML = """<!DOCTYPE html>
                   </div>
                 </div>
               </div>
+
+              <div class="acc-card open">
+                <div class="acc-hd">
+                  <div>
+                    <div class="acc-title">2. 自定义筛选与评分规则（完全由您定义口径与分值 · 保存即全局生效）</div>
+                    <div class="acc-desc">由使用者自由规定「哪个口径、单选或多选命中、加/减多少分、是否一票淘汰及总分合格线」；右侧提供参考口径与分值示例，可按需借鉴或一键套用后再改。</div>
+                  </div>
+                  <span class="acc-toggle">−</span>
+                </div>
+                <div class="acc-body">
+                  <div class="cf-split">
+                    <div>
+                      <div class="cf-group">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                          <label style="display:flex;align-items:center;gap:7px;font-weight:800;font-size:13px;cursor:pointer;">
+                            <input id="cfgCfEnabled" type="checkbox" />
+                            <span>启用全局自定义规则（保存后对全 App 筛选/算分生效）</span>
+                          </label>
+                          <div class="cf-chip-row" id="cfModeGroup">
+                            <button type="button" class="cf-chip active" data-cf-mode="override" title="仅按下方您自己的规则总分决定筛选与排序">接管评分与筛选</button>
+                            <button type="button" class="cf-chip" data-cf-mode="blend" title="在 AI 原评分基础上叠加下方加减分规则">叠加 AI 评分微调</button>
+                          </div>
+                        </div>
+
+                        <div class="cf-chip-row" id="cfScorePresets" style="gap:8px;">
+                          <span style="font-size:12px;font-weight:700;color:var(--ink);">起始底分</span>
+                          <input id="cfgCfBaseScore" class="cf-inp-sm" type="number" min="0" max="100" value="0" style="width:68px;" />
+                          <span style="font-size:12px;font-weight:700;color:var(--ink);margin-left:6px;">入选最低总分线</span>
+                          <input id="cfgCfMinScore" class="cf-inp-sm" type="number" min="0" max="200" value="60" style="width:74px;" />
+                          <button type="button" class="cf-chip" data-cf-score="0">不限(0)</button>
+                          <button type="button" class="cf-chip" data-cf-score="60">60分+</button>
+                          <button type="button" class="cf-chip" data-cf-score="70">70分+</button>
+                          <button type="button" class="cf-chip" data-cf-score="80">80分+</button>
+                          <button type="button" class="cf-chip" data-cf-score="90">90分+</button>
+                        </div>
+                      </div>
+
+                      <div class="cf-label" style="margin:6px 0;">
+                        <span>我的筛选与算分口径（每条均可设单选/多选、加减分或一票排除）</span>
+                        <button type="button" class="btn btn-soft" id="btnAddCfRule" style="padding:4px 10px;font-size:12px;">+ 新增一条规则</button>
+                      </div>
+                      <div id="cfRulesList" class="cf-rule-list"></div>
+
+                      <details id="cfExtraDetails" style="margin:8px 0 12px;background:#fff;border:1px solid #ede9fe;border-radius:10px;padding:8px 12px;">
+                        <summary id="cfExtraSummary" style="cursor:pointer;font-size:12px;font-weight:700;color:#4b5563;">附加快捷限定（可选：留空则完全交由上方规则决定）</summary>
+                        <div style="margin-top:10px;">
+                          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+                            <span style="font-size:11.5px;color:#6b7280;">注意：此处选中的项会作为“一票硬门槛”额外过滤所有岗位；若想完全按上方自定义规则打分排序，请保持全部未选。</span>
+                            <button type="button" class="btn btn-outline" id="btnClearCfExtra" style="padding:3px 9px;font-size:11.5px;">清空全部附加快捷限定</button>
+                          </div>
+                          <div class="cf-group">
+                            <div class="cf-label"><span>城市范围（单选）</span><span class="cf-mode-tag">单选 + 多选城市</span></div>
+                            <div class="cf-chip-row" id="cfCityScopeGroup" style="margin-bottom:6px;">
+                              <button type="button" class="cf-chip active" data-cf-city-scope="all">不限制</button>
+                              <button type="button" class="cf-chip" data-cf-city-scope="primary_only">仅首选/指定</button>
+                              <button type="button" class="cf-chip" data-cf-city-scope="primary_and_secondary">首选+备选</button>
+                              <button type="button" class="cf-chip" data-cf-city-scope="allow_nationwide">含全国不限</button>
+                            </div>
+                            <div class="cf-chip-row" id="cfCityChips" style="margin-bottom:6px;">
+                              <button type="button" class="cf-chip" data-cf-city="太原">太原</button>
+                              <button type="button" class="cf-chip" data-cf-city="北京">北京</button>
+                              <button type="button" class="cf-chip" data-cf-city="上海">上海</button>
+                              <button type="button" class="cf-chip" data-cf-city="成都">成都</button>
+                              <button type="button" class="cf-chip" data-cf-city="杭州">杭州</button>
+                              <button type="button" class="cf-chip" data-cf-city="西安">西安</button>
+                            </div>
+                            <input id="cfgCfCities" class="cfg-input" placeholder="指定城市（逗号分隔，留空不限）" />
+                          </div>
+                          <div class="cfg-row2">
+                            <div class="cf-group">
+                              <div class="cf-label"><span>批次（可多选/单选）</span></div>
+                              <div class="cf-chip-row" id="cfJobTypesGroup">
+                                <button type="button" class="cf-chip" data-cf-jobtype="校招">秋招 / 校招</button>
+                                <button type="button" class="cf-chip" data-cf-jobtype="实习">实习</button>
+                              </div>
+                            </div>
+                            <div class="cf-group">
+                              <div class="cf-label"><span>核验状态（可多选/单选）</span></div>
+                              <div class="cf-chip-row" id="cfFactcheckGroup">
+                                <button type="button" class="cf-chip" data-cf-fact="pass">通过 (pass)</button>
+                                <button type="button" class="cf-chip" data-cf-fact="fallback_raw">自动回退</button>
+                                <button type="button" class="cf-chip" data-cf-fact="warn">带告警</button>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="cfg-row2">
+                            <div class="cf-group">
+                              <div class="cf-label"><span>投递渠道（可多选/单选）</span></div>
+                              <div class="cf-chip-row" id="cfChannelsGroup">
+                                <button type="button" class="cf-chip" data-cf-channel="company_portal">企业官网</button>
+                                <button type="button" class="cf-chip" data-cf-channel="third_party">平台直聊</button>
+                                <button type="button" class="cf-chip" data-cf-channel="email">邮箱直投</button>
+                              </div>
+                            </div>
+                            <div class="cf-group">
+                              <div class="cf-label"><span>来源站点（可多选/单选）</span></div>
+                              <div class="cf-chip-row" id="cfSourcesGroup">
+                                <button type="button" class="cf-chip" data-cf-source="iguopin">国聘网</button>
+                                <button type="button" class="cf-chip" data-cf-source="zhaopin">智联</button>
+                                <button type="button" class="cf-chip" data-cf-source="zhipin">Boss</button>
+                                <button type="button" class="cf-chip" data-cf-source="51job">51job</button>
+                                <button type="button" class="cf-chip" data-cf-source="ncss">24365</button>
+                                <button type="button" class="cf-chip" data-cf-source="shixiseng">实习僧</button>
+                                <button type="button" class="cf-chip" data-cf-source="campus_site">校招/手动</button>
+                                <button type="button" class="cf-chip" data-cf-source="demo_sample">示例</button>
+                              </div>
+                            </div>
+                          </div>
+                          <input id="cfgCfIncludeKw" type="hidden" />
+                          <input id="cfgCfExcludedKw" type="hidden" />
+                        </div>
+                      </details>
+
+                      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <button class="btn btn-primary" id="btnSaveCustomFilter">保存并全局启用规则</button>
+                        <button class="btn btn-soft" id="btnSaveCustomFilterAndRun">保存并重跑 AI 匹配</button>
+                        <button class="btn btn-outline" id="btnResetCustomFilter">恢复默认全放行</button>
+                      </div>
+                    </div>
+
+                    <aside class="cf-ref-box" aria-label="参考口径与对应分数示例">
+                      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;">
+                        <strong style="font-size:13px;color:var(--rail);">💡 参考口径与推荐分数示例</strong>
+                        <button type="button" class="btn btn-outline" id="btnLoadRefTemplate" style="padding:3px 9px;font-size:11.5px;">一键导入参考模板</button>
+                      </div>
+                      <div style="font-size:11.5px;color:var(--muted);line-height:1.45;">
+                        以下仅作为设定口径和分值的参考示范（按“满分100、入选线60~75分”思路设计）；点右侧「➕ 套用」可加入左侧列表自由改词、改分或设单/多选。
+                      </div>
+                      <div id="cfReferenceList"></div>
+                    </aside>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1050,6 +1376,15 @@ REVIEW_HTML = """<!DOCTYPE html>
     const iCnt = data.intern_count ?? 0;
     const allCnt = cCnt + iCnt;
     el('summaryLine').textContent = `当前列表 ${packagesCache.length} 份（秋招/校招 ${cCnt} · 实习 ${iCnt}） · 投递看板 ${data.applications_count || 0} 条`;
+    const gfBanner = el('globalFilterBanner');
+    if (gfBanner) {
+      if (data.global_filter_active) {
+        gfBanner.classList.add('show');
+        el('globalFilterBannerText').textContent = `🎯 全局筛选：${data.global_filter_summary || '已启用'}`;
+      } else {
+        gfBanner.classList.remove('show');
+      }
+    }
     const tAll = document.querySelector('#trackBar [data-type="all"]');
     const tCam = document.querySelector('#trackBar [data-type="校招"]');
     const tInt = document.querySelector('#trackBar [data-type="实习"]');
@@ -1115,6 +1450,17 @@ REVIEW_HTML = """<!DOCTYPE html>
       meta.textContent = `${cities} · ${p.source} · 核验:${p.factcheck_status || 'pass'}`;
 
       card.append(top, title, meta);
+      if (Array.isArray(p.custom_rule_hits) && p.custom_rule_hits.length > 0) {
+        const hitsRow = document.createElement('div');
+        hitsRow.className = 'cf-hits-line';
+        p.custom_rule_hits.slice(0, 4).forEach((ht) => {
+          const tag = document.createElement('span');
+          tag.className = 'cf-hit-tag';
+          tag.textContent = ht;
+          hitsRow.appendChild(tag);
+        });
+        card.appendChild(hitsRow);
+      }
       box.appendChild(card);
     });
   }
@@ -1139,6 +1485,9 @@ REVIEW_HTML = """<!DOCTYPE html>
     const gaps = (detail.gaps || []).join('；');
     el('dGaps').textContent = gaps ? '短板提示：' + gaps : '';
     el('decisionNote').value = detail.decision_reason || '';
+
+    const pkgRow = packagesCache.find(p => p.package_id === pkgId);
+    renderCompanyBadgeOnDetail(pkgRow?.company_check || detail.company_check || null, detail.company || '');
 
     const portalA = el('dPortalLink');
     if (detail.url) {
@@ -1565,7 +1914,7 @@ REVIEW_HTML = """<!DOCTYPE html>
     });
     const revEl = el('page-review');
     if (revEl) revEl.style.display = isReview ? 'grid' : 'none';
-    ['inbox', 'queue', 'insights', 'settings'].forEach(p => {
+    ['inbox', 'queue', 'insights', 'data', 'settings'].forEach(p => {
       const panel = el('page-' + p);
       if (panel) panel.classList.toggle('active', p === tabName);
     });
@@ -1589,6 +1938,8 @@ REVIEW_HTML = """<!DOCTYPE html>
       loadApplications();
     } else if (tabName === 'insights') {
       loadStage5Overview();
+    } else if (tabName === 'data') {
+      loadDataDashboard();
     } else if (tabName === 'settings') {
       loadSettingsPanel();
       loadSystemStatus();
@@ -1620,6 +1971,7 @@ REVIEW_HTML = """<!DOCTYPE html>
 
   el('btnTopQueue').addEventListener('click', () => switchMainTab('queue'));
   el('btnTopInsights').addEventListener('click', () => switchMainTab('insights'));
+  el('btnTopData')?.addEventListener('click', () => switchMainTab('data'));
   el('btnTopMessages')?.addEventListener('click', () => switchMainTab('inbox'));
   el('btnEmptyInbox')?.addEventListener('click', () => switchMainTab('inbox'));
   el('btnEmptyQueue')?.addEventListener('click', () => switchMainTab('queue'));
@@ -1797,6 +2149,32 @@ REVIEW_HTML = """<!DOCTYPE html>
   let emailPresetsCache = [];
   let pushPresetsCache = [];
 
+  let ccPresetsCache = [];
+  let currentDetailCompany = '';
+
+  function renderCompanyBadgeOnDetail(cc, companyName) {
+    currentDetailCompany = companyName || '';
+    const badge = el('dCompanyBadge');
+    if (!badge) return;
+    if (!cc || !cc.risk_level || cc.risk_level === 'unknown') {
+      badge.className = 'pill';
+      badge.textContent = cc?.risk_summary ? `🏢 ${cc.risk_summary}` : '🏢 企业工商背调：暂未核查（点右侧按钮即时查询）';
+      return;
+    }
+    const cls = cc.risk_level === 'severe' ? 'pill-reject' : (cc.risk_level === 'warning' ? 'pill-later' : 'pill-approve');
+    const icon = cc.risk_level === 'severe' ? '🚨 高危避坑' : (cc.risk_level === 'warning' ? '⚠️ 需留意' : '🛡️ 工商存续正常');
+    badge.className = 'pill ' + cls;
+    badge.textContent = `${icon} · ${cc.risk_summary || cc.reg_status || ''}`;
+  }
+
+  function applyCompanyCheckPresetFields(presetId) {
+    const p = ccPresetsCache.find(item => item.id === presetId);
+    if (!p) return;
+    if (el('cfgCcHint')) el('cfgCcHint').textContent = p.hint || '';
+    if (el('cfgCcUrl') && presetId !== 'custom_mcp') el('cfgCcUrl').value = p.mcp_url || '';
+    if (el('cfgCcKeyEnv') && p.default_key_env) el('cfgCcKeyEnv').value = p.default_key_env;
+  }
+
   function applyLlmPresetFields(presetId) {
     const p = llmPresetsCache.find(item => item.id === presetId);
     if (!p) return;
@@ -1897,6 +2275,56 @@ REVIEW_HTML = """<!DOCTYPE html>
       el('cfgMinScore').value = String(d.scoring?.min_score_for_package ?? 80);
       el('cfgExcludedKw').value = (d.preferences?.excluded_keywords || []).join(', ');
 
+      const cf = d.preferences?.custom_filter || {};
+      refTemplatesCache = d.filter_reference_templates || [];
+      if (el('cfgCfEnabled')) {
+        el('cfgCfEnabled').checked = Boolean(cf.enabled);
+        const cfMode = cf.mode || 'override';
+        document.querySelectorAll('#cfModeGroup .cf-chip').forEach((b) => {
+          b.classList.toggle('active', b.dataset.cfMode === cfMode);
+        });
+        if (el('cfgCfBaseScore')) el('cfgCfBaseScore').value = String(cf.base_score ?? 0);
+        const cfScore = Number(cf.min_display_score ?? 60);
+        el('cfgCfMinScore').value = String(cfScore);
+        document.querySelectorAll('#cfScorePresets .cf-chip').forEach((b) => {
+          b.classList.toggle('active', Number(b.dataset.cfScore) === cfScore);
+        });
+        customRulesState = Array.isArray(cf.rules)
+          ? cf.rules.map((r, i) => ({
+              id: r.id || `rule_${i + 1}`,
+              name: r.name || '',
+              enabled: r.enabled !== false,
+              field: r.field || 'any_text',
+              match_mode: r.match_mode || 'multi_any',
+              values: Array.isArray(r.values) ? [...r.values] : [],
+              action: r.action || 'add',
+              score: Number(r.score ?? 20),
+            }))
+          : [];
+        if (typeof renderCustomRules === 'function') renderCustomRules();
+        if (typeof renderFilterReferences === 'function') renderFilterReferences();
+
+        const cScope = cf.city_scope || 'all';
+        document.querySelectorAll('#cfCityScopeGroup .cf-chip').forEach((b) => {
+          b.classList.toggle('active', b.dataset.cfCityScope === cScope);
+        });
+        const setMulti = (sel, attr, vals) => {
+          const picked = new Set((vals || []).map((x) => String(x)));
+          document.querySelectorAll(sel).forEach((b) => {
+            b.classList.toggle('active', picked.has(String(b.dataset[attr] || '')));
+          });
+        };
+        const cfCities = cf.custom_cities || [];
+        el('cfgCfCities').value = cfCities.join(', ');
+        setMulti('#cfCityChips .cf-chip', 'cfCity', cfCities);
+        setMulti('#cfJobTypesGroup .cf-chip', 'cfJobtype', cf.job_types);
+        setMulti('#cfFactcheckGroup .cf-chip', 'cfFact', cf.factcheck_statuses);
+        setMulti('#cfChannelsGroup .cf-chip', 'cfChannel', cf.apply_channels);
+        setMulti('#cfSourcesGroup .cf-chip', 'cfSource', cf.sources);
+        if (el('cfgCfIncludeKw')) el('cfgCfIncludeKw').value = (cf.include_keywords || []).join(', ');
+        if (el('cfgCfExcludedKw')) el('cfgCfExcludedKw').value = (cf.excluded_keywords || []).join(', ');
+      }
+
       const cr = d.cloud_relay || {};
       if (el('cfgRelayProvider')) {
         el('cfgRelayProvider').value = cr.provider || 'none';
@@ -1905,6 +2333,33 @@ REVIEW_HTML = """<!DOCTYPE html>
         el('cfgRelaySecretState').textContent = cr.relay_secret_set
           ? `已配置端到端配对口令：${cr.relay_secret_masked}`
           : '未设置口令（演示时自动生成本机临时密钥，不会上传云端）';
+      }
+
+      ccPresetsCache = d.company_check_presets || [];
+      const cc = d.company_check || {};
+      const ccSel = el('cfgCcProvider');
+      if (ccSel) {
+        ccSel.replaceChildren();
+        ccPresetsCache.forEach((p) => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.label;
+          ccSel.appendChild(opt);
+        });
+        ccSel.value = cc.provider || 'tianyancha_mcp';
+        const curCc = ccPresetsCache.find(x => x.id === ccSel.value);
+        if (el('cfgCcHint')) el('cfgCcHint').textContent = curCc?.hint || '';
+        if (el('cfgCcEnabled')) el('cfgCcEnabled').checked = Boolean(cc.enabled);
+        if (el('cfgCcUrl')) el('cfgCcUrl').value = cc.mcp_url || '';
+        if (el('cfgCcKeyEnv')) el('cfgCcKeyEnv').value = cc.api_key_env || 'TYC_MCP_API_KEY';
+        if (el('cfgCcMinScore')) el('cfgCcMinScore').value = String(cc.min_score_to_check ?? 60);
+        if (el('cfgCcCacheDays')) el('cfgCcCacheDays').value = String(cc.cache_days ?? 30);
+        if (el('cfgCcAutoReject')) el('cfgCcAutoReject').checked = cc.auto_reject_severe_risk !== false;
+        if (el('cfgCcKeyState')) {
+          el('cfgCcKeyState').textContent = cc.api_key_set
+            ? `已保存背调密钥：${cc.api_key_masked}`
+            : '尚未填入 API Key / Token（天眼查可前往 https://ai.tianyancha.com 免费申请）';
+        }
       }
     } catch (_) {}
   }
@@ -1944,6 +2399,66 @@ REVIEW_HTML = """<!DOCTYPE html>
     const d = await res.json();
     el('cfgLlmTestResult').textContent = d.ok ? `连通成功 [${d.provider} / ${d.model}]` : `连通失败：${d.error || '未知错误'}`;
     showToast(d.ok ? '模型连通测试通过' : '模型连通测试失败');
+  });
+
+  el('cfgCcProvider')?.addEventListener('change', (e) => applyCompanyCheckPresetFields(e.target.value));
+
+  el('btnSaveCompanyCheck')?.addEventListener('click', async () => {
+    const prov = el('cfgCcProvider')?.value || 'tianyancha_mcp';
+    const enabled = Boolean(el('cfgCcEnabled')?.checked) && prov !== 'none';
+    const payload = {
+      company_check: {
+        enabled,
+        provider: prov,
+        mcp_url: el('cfgCcUrl')?.value.trim() || '',
+        api_key_env: el('cfgCcKeyEnv')?.value.trim() || 'TYC_MCP_API_KEY',
+        api_key: el('cfgCcApiKey')?.value.trim() || '',
+        min_score_to_check: Number(el('cfgCcMinScore')?.value || 60),
+        cache_days: Number(el('cfgCcCacheDays')?.value || 30),
+        auto_reject_severe_risk: Boolean(el('cfgCcAutoReject')?.checked),
+      },
+    };
+    const res = await fetch('/api/system/settings', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+    });
+    const d = await res.json();
+    if (el('cfgCcApiKey')) el('cfgCcApiKey').value = '';
+    showToast(res.ok ? '已保存企业工商风控背调设置' : (d.detail || '保存失败'));
+    await loadSettingsPanel();
+  });
+
+  el('btnTestCompanyCheck')?.addEventListener('click', async () => {
+    if (el('cfgCcTestResult')) el('cfgCcTestResult').textContent = '正在连接 MCP 网关并拉取 tools/list...';
+    const res = await fetch('/api/system/test-company-check', { method: 'POST' });
+    const d = await res.json();
+    if (el('cfgCcTestResult')) {
+      el('cfgCcTestResult').textContent = d.status === 'ok'
+        ? `✅ ${d.message}（工具示例：${(d.sample_tools || []).slice(0, 5).join(', ')}）`
+        : `⚠️ ${d.error || d.message || '连接未就绪'}`;
+    }
+    showToast(d.status === 'ok' ? '企业背调 MCP 连通成功' : (d.error || '连通测试失败'));
+  });
+
+  el('btnVerifyCompanyNow')?.addEventListener('click', async () => {
+    if (!currentDetailCompany) return;
+    const btn = el('btnVerifyCompanyNow');
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch('/api/company-check/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company: currentDetailCompany, force: false }),
+      });
+      const d = await res.json();
+      if (d.company_check) {
+        renderCompanyBadgeOnDetail(d.company_check, currentDetailCompany);
+        const cur = packagesCache.find(p => p.package_id === selectedPkgId);
+        if (cur) cur.company_check = d.company_check;
+        showToast(d.company_check.risk_summary || '企业核查完成');
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   });
 
   el('btnSaveEmailCfg')?.addEventListener('click', async () => {
@@ -2116,6 +2631,453 @@ REVIEW_HTML = """<!DOCTYPE html>
     const d = await res.json();
     showToast(res.ok ? '已保存个人偏好与评分阈值' : (d.detail || '保存失败'));
     await loadSettingsPanel();
+    updateCfExtraSummary();
+    await loadPackages();
+    await loadDataDashboard();
+  });
+
+  // Custom User-Defined Scoring & Filtering Rule Builder + Reference Panel
+  const splitTokens = (txt) => String(txt || '').split(/[,，、;\\n]+/).map((s) => s.trim()).filter(Boolean);
+  const readActiveChips = (sel, attr) => Array.from(document.querySelectorAll(sel + '.active')).map((b) => b.dataset[attr]).filter(Boolean);
+
+  let customRulesState = [];
+  let refTemplatesCache = [];
+
+  const FIELD_OPTS = [
+    ['any_text', '全部文本(公司+职位+JD)'],
+    ['title', '职位名称'],
+    ['company', '公司名称'],
+    ['city', '工作城市'],
+    ['job_type', '岗位批次(校招/实习)'],
+    ['apply_channel', '投递渠道'],
+    ['source', '数据来源'],
+    ['factcheck_status', '核验状态'],
+  ];
+  const MODE_OPTS = [
+    ['multi_any', '多选任一命中'],
+    ['single', '单选精确匹配'],
+    ['multi_all', '多选全部同时命中'],
+  ];
+  const ACTION_OPTS = [
+    ['add', '命中加分 (+)'],
+    ['deduct', '命中扣分 (-)'],
+    ['require', '必须满足(硬门槛)'],
+    ['exclude', '一票排除(淘汰)'],
+  ];
+
+  function renderCustomRules() {
+    const box = el('cfRulesList');
+    if (!box) return;
+    box.replaceChildren();
+    if (customRulesState.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'cf-rule-card';
+      empty.style.color = '#6b7280';
+      empty.style.fontSize = '12px';
+      empty.textContent = '暂未添加自定义规则。点击右上角「+ 新增一条规则」，或点击右侧「➕ 套用」参考模板自由调整口碑分值。';
+      box.appendChild(empty);
+      return;
+    }
+    customRulesState.forEach((rule, idx) => {
+      const card = document.createElement('div');
+      card.className = 'cf-rule-card';
+
+      const row1 = document.createElement('div');
+      row1.className = 'cf-rule-row1';
+
+      const chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.checked = rule.enabled !== false;
+      chk.title = '启用/暂停此条规则';
+      chk.onchange = () => { rule.enabled = chk.checked; };
+
+      const nameInp = document.createElement('input');
+      nameInp.className = 'cf-inp-sm';
+      nameInp.style.flex = '1';
+      nameInp.style.minWidth = '130px';
+      nameInp.placeholder = `规则口径名称（如 口径${idx + 1}）`;
+      nameInp.value = rule.name || '';
+      nameInp.oninput = () => { rule.name = nameInp.value; };
+
+      const fieldSel = document.createElement('select');
+      fieldSel.className = 'cf-inp-sm';
+      FIELD_OPTS.forEach(([val, label]) => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = label;
+        fieldSel.appendChild(opt);
+      });
+      fieldSel.value = rule.field || 'any_text';
+      fieldSel.onchange = () => { rule.field = fieldSel.value; };
+
+      const modeSel = document.createElement('select');
+      modeSel.className = 'cf-inp-sm';
+      MODE_OPTS.forEach(([val, label]) => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = label;
+        modeSel.appendChild(opt);
+      });
+      modeSel.value = rule.match_mode || 'multi_any';
+      modeSel.onchange = () => { rule.match_mode = modeSel.value; };
+
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn btn-outline';
+      delBtn.style.padding = '4px 8px';
+      delBtn.style.fontSize = '11.5px';
+      delBtn.style.color = '#b91c1c';
+      delBtn.textContent = '删除';
+      delBtn.onclick = () => {
+        customRulesState.splice(idx, 1);
+        renderCustomRules();
+      };
+
+      row1.append(chk, nameInp, fieldSel, modeSel, delBtn);
+
+      const row2 = document.createElement('div');
+      row2.className = 'cf-rule-row2';
+
+      const valInp = document.createElement('input');
+      valInp.className = 'cf-inp-sm';
+      valInp.style.flex = '1';
+      valInp.style.minWidth = '180px';
+      valInp.placeholder = '输入口径取值（逗号分隔，单选写1个或多个精确值；多选写多个词）';
+      valInp.value = Array.isArray(rule.values) ? rule.values.join(', ') : String(rule.values || '');
+      valInp.oninput = () => { rule.values = splitTokens(valInp.value); };
+
+      const actSel = document.createElement('select');
+      actSel.className = 'cf-inp-sm';
+      ACTION_OPTS.forEach(([val, label]) => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = label;
+        actSel.appendChild(opt);
+      });
+      actSel.value = rule.action || 'add';
+
+      const scoreInp = document.createElement('input');
+      scoreInp.type = 'number';
+      scoreInp.min = '0';
+      scoreInp.max = '200';
+      scoreInp.className = 'cf-inp-sm';
+      scoreInp.style.width = '72px';
+      scoreInp.value = String(rule.score ?? 20);
+      const syncScoreVis = () => {
+        const isScoring = actSel.value === 'add' || actSel.value === 'deduct';
+        scoreInp.disabled = !isScoring;
+        scoreInp.style.opacity = isScoring ? '1' : '0.45';
+      };
+      syncScoreVis();
+      actSel.onchange = () => {
+        rule.action = actSel.value;
+        syncScoreVis();
+      };
+      scoreInp.oninput = () => {
+        rule.score = Math.max(0, Math.min(200, Number(scoreInp.value || 0)));
+      };
+
+      const scoreUnit = document.createElement('span');
+      scoreUnit.style.fontSize = '11.5px';
+      scoreUnit.style.color = '#6b7280';
+      scoreUnit.textContent = '分';
+
+      row2.append(valInp, actSel, scoreInp, scoreUnit);
+      card.append(row1, row2);
+      box.appendChild(card);
+    });
+    if (typeof updateCfExtraSummary === 'function') updateCfExtraSummary();
+  }
+
+  function renderFilterReferences() {
+    const box = el('cfReferenceList');
+    if (!box) return;
+    box.replaceChildren();
+    const fieldNameMap = Object.fromEntries(FIELD_OPTS);
+    refTemplatesCache.forEach((tpl) => {
+      const card = document.createElement('div');
+      card.className = 'cf-ref-item';
+
+      const hd = document.createElement('div');
+      hd.className = 'cf-ref-head';
+      const title = document.createElement('strong');
+      title.style.fontSize = '12px';
+      title.style.color = 'var(--ink)';
+      title.textContent = tpl.name || '';
+      const scoreBadge = document.createElement('span');
+      scoreBadge.className = 'cf-ref-score';
+      scoreBadge.textContent =
+        tpl.action === 'exclude'
+          ? '一票排除'
+          : tpl.action === 'require'
+            ? '必须满足'
+            : tpl.action === 'deduct'
+              ? `-${tpl.score} 分`
+              : `+${tpl.score} 分`;
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'cf-chip';
+      addBtn.style.padding = '2px 8px';
+      addBtn.style.fontSize = '11px';
+      addBtn.textContent = '➕ 套用';
+      addBtn.onclick = () => {
+        customRulesState.push({
+          id: 'rule_' + Date.now(),
+          name: tpl.name,
+          enabled: true,
+          field: tpl.field || 'any_text',
+          match_mode: tpl.match_mode || 'multi_any',
+          values: [...(tpl.values || [])],
+          action: tpl.action || 'add',
+          score: Number(tpl.score ?? 20),
+        });
+        renderCustomRules();
+        showToast(`已套用「${tpl.name}」到左侧，可自由修改分值与词汇`);
+      };
+      const rightGrp = document.createElement('div');
+      rightGrp.style.display = 'flex';
+      rightGrp.style.alignItems = 'center';
+      rightGrp.style.gap = '5px';
+      rightGrp.append(scoreBadge, addBtn);
+      hd.append(title, rightGrp);
+
+      const meta = document.createElement('div');
+      meta.style.fontSize = '11px';
+      meta.style.color = '#6b7280';
+      meta.textContent = `${fieldNameMap[tpl.field] || tpl.field} · 示例值：${(tpl.values || []).join(', ')}`;
+
+      const hint = document.createElement('div');
+      hint.style.fontSize = '11px';
+      hint.style.color = '#4b5563';
+      hint.style.marginTop = '2px';
+      hint.textContent = tpl.hint || '';
+
+      card.append(hd, meta, hint);
+      box.appendChild(card);
+    });
+  }
+
+  el('btnAddCfRule')?.addEventListener('click', () => {
+    customRulesState.push({
+      id: 'rule_' + Date.now(),
+      name: `自定义口径 ${customRulesState.length + 1}`,
+      enabled: true,
+      field: 'any_text',
+      match_mode: 'multi_any',
+      values: [],
+      action: 'add',
+      score: 20,
+    });
+    renderCustomRules();
+  });
+
+  el('btnLoadRefTemplate')?.addEventListener('click', () => {
+    if (!refTemplatesCache.length) return;
+    customRulesState = refTemplatesCache.map((tpl, i) => ({
+      id: `rule_tpl_${i + 1}`,
+      name: tpl.name,
+      enabled: true,
+      field: tpl.field || 'any_text',
+      match_mode: tpl.match_mode || 'multi_any',
+      values: [...(tpl.values || [])],
+      action: tpl.action || 'add',
+      score: Number(tpl.score ?? 20),
+    }));
+    if (el('cfgCfMinScore')) {
+      el('cfgCfMinScore').value = '60';
+      document.querySelectorAll('#cfScorePresets .cf-chip').forEach((b) => {
+        b.classList.toggle('active', Number(b.dataset.cfScore) === 60);
+      });
+    }
+    renderCustomRules();
+    showToast('已一键载入全套参考模板，请按你的实际求职标准自由修改分值后保存');
+  });
+
+  document.querySelectorAll('#cfModeGroup .cf-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#cfModeGroup .cf-chip').forEach((b) => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  document.querySelectorAll('#cfScorePresets .cf-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const val = Number(btn.dataset.cfScore || 0);
+      if (el('cfgCfMinScore')) el('cfgCfMinScore').value = String(val);
+      document.querySelectorAll('#cfScorePresets .cf-chip').forEach((b) => b.classList.toggle('active', b === btn));
+    });
+  });
+  el('cfgCfMinScore')?.addEventListener('input', () => {
+    const val = Number(el('cfgCfMinScore').value || 0);
+    document.querySelectorAll('#cfScorePresets .cf-chip').forEach((b) => {
+      b.classList.toggle('active', Number(b.dataset.cfScore) === val);
+    });
+  });
+
+  function updateCfExtraSummary() {
+    const sum = el('cfExtraSummary');
+    if (!sum) return;
+    const scope = document.querySelector('#cfCityScopeGroup .cf-chip.active')?.dataset.cfCityScope || 'all';
+    const cnt =
+      (scope !== 'all' ? 1 : 0) +
+      readActiveChips('#cfJobTypesGroup .cf-chip', 'cfJobtype').length +
+      readActiveChips('#cfFactcheckGroup .cf-chip', 'cfFact').length +
+      readActiveChips('#cfChannelsGroup .cf-chip', 'cfChannel').length +
+      readActiveChips('#cfSourcesGroup .cf-chip', 'cfSource').length;
+    if (cnt > 0) {
+      sum.textContent = `⚠️ 附加快捷限定（当前已附加 ${cnt} 项硬性限制 · 点此展开或一键清空）`;
+      sum.style.color = '#b45309';
+    } else {
+      sum.textContent = '附加快捷限定（当前无额外硬限制，完全交由上方规则裁决）';
+      sum.style.color = '#4b5563';
+    }
+  }
+
+  el('btnClearCfExtra')?.addEventListener('click', () => {
+    document.querySelectorAll('#cfCityScopeGroup .cf-chip').forEach((b) => {
+      b.classList.toggle('active', b.dataset.cfCityScope === 'all');
+    });
+    if (el('cfgCfCities')) el('cfgCfCities').value = '';
+    document.querySelectorAll('#cfCityChips .cf-chip').forEach((b) => b.classList.remove('active'));
+    ['#cfJobTypesGroup .cf-chip', '#cfFactcheckGroup .cf-chip', '#cfChannelsGroup .cf-chip', '#cfSourcesGroup .cf-chip'].forEach((sel) => {
+      document.querySelectorAll(sel).forEach((b) => b.classList.remove('active'));
+    });
+    updateCfExtraSummary();
+    showToast('已清空附加快捷限定，点击「保存并全局启用规则」后生效');
+  });
+
+  document.querySelectorAll('#cfCityScopeGroup .cf-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#cfCityScopeGroup .cf-chip').forEach((b) => b.classList.toggle('active', b === btn));
+      updateCfExtraSummary();
+    });
+  });
+
+  ['#cfJobTypesGroup .cf-chip', '#cfFactcheckGroup .cf-chip', '#cfChannelsGroup .cf-chip', '#cfSourcesGroup .cf-chip'].forEach((sel) => {
+    document.querySelectorAll(sel).forEach((btn) => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+        updateCfExtraSummary();
+      });
+    });
+  });
+
+  function bindChipInputSync(chipSel, attr, inputId) {
+    const inp = el(inputId);
+    document.querySelectorAll(chipSel).forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tok = String(btn.dataset[attr] || '').trim();
+        if (!tok || !inp) return;
+        const cur = splitTokens(inp.value);
+        const exists = cur.includes(tok);
+        const next = exists ? cur.filter((x) => x !== tok) : [...cur, tok];
+        inp.value = next.join(', ');
+        btn.classList.toggle('active', !exists);
+      });
+    });
+    inp?.addEventListener('input', () => {
+      const picked = new Set(splitTokens(inp.value));
+      document.querySelectorAll(chipSel).forEach((b) => b.classList.toggle('active', picked.has(String(b.dataset[attr] || ''))));
+    });
+  }
+  bindChipInputSync('#cfCityChips .cf-chip', 'cfCity', 'cfgCfCities');
+
+  function collectCustomFilterPayload(forceEnable = null) {
+    const activeScope = document.querySelector('#cfCityScopeGroup .cf-chip.active')?.dataset.cfCityScope || 'all';
+    const activeMode = document.querySelector('#cfModeGroup .cf-chip.active')?.dataset.cfMode || 'override';
+    const enabled = forceEnable === null ? Boolean(el('cfgCfEnabled')?.checked) : Boolean(forceEnable);
+    if (el('cfgCfEnabled') && forceEnable !== null) el('cfgCfEnabled').checked = Boolean(forceEnable);
+    const minScore = Math.max(0, Math.min(200, Number(el('cfgCfMinScore')?.value || 0)));
+    const baseScore = Math.max(0, Math.min(100, Number(el('cfgCfBaseScore')?.value || 0)));
+    return {
+      preferences: {
+        custom_filter: {
+          enabled,
+          mode: activeMode,
+          base_score: baseScore,
+          min_display_score: minScore,
+          rules: customRulesState.map((r, i) => ({
+            id: r.id || `rule_${i + 1}`,
+            name: r.name || `自定义口径 ${i + 1}`,
+            enabled: r.enabled !== false,
+            field: r.field || 'any_text',
+            match_mode: r.match_mode || 'multi_any',
+            values: Array.isArray(r.values) ? r.values : splitTokens(r.values),
+            action: r.action || 'add',
+            score: Math.max(0, Math.min(200, Number(r.score ?? 20))),
+          })),
+          city_scope: activeScope,
+          custom_cities: splitTokens(el('cfgCfCities')?.value),
+          job_types: readActiveChips('#cfJobTypesGroup .cf-chip', 'cfJobtype'),
+          apply_channels: readActiveChips('#cfChannelsGroup .cf-chip', 'cfChannel'),
+          factcheck_statuses: readActiveChips('#cfFactcheckGroup .cf-chip', 'cfFact'),
+          sources: readActiveChips('#cfSourcesGroup .cf-chip', 'cfSource'),
+          include_keywords: [],
+          excluded_keywords: [],
+        },
+      },
+    };
+  }
+
+  async function saveCustomFilter(forceEnable = null, runAfter = false) {
+    const payload = collectCustomFilterPayload(forceEnable);
+    const res = await fetch('/api/system/settings', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+    });
+    const d = await res.json();
+    if (!res.ok) {
+      showToast(d.detail || '保存自定义规则失败');
+      return;
+    }
+    const on = Boolean(payload.preferences.custom_filter.enabled);
+    showToast(on ? '已保存并启用全局自定义筛选与算分规则' : '已保存规则配置（当前未启用全局接管）');
+    await loadSettingsPanel();
+    updateCfExtraSummary();
+    await loadPackages();
+    await loadDataDashboard();
+    if (runAfter) {
+      await triggerRunScreen();
+    }
+  }
+
+  el('btnSaveCustomFilter')?.addEventListener('click', () => saveCustomFilter(true, false));
+  el('btnSaveCustomFilterAndRun')?.addEventListener('click', () => saveCustomFilter(true, true));
+  el('btnResetCustomFilter')?.addEventListener('click', async () => {
+    customRulesState = [];
+    const res = await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        preferences: {
+          custom_filter: {
+            enabled: false,
+            mode: 'override',
+            base_score: 0,
+            min_display_score: 0,
+            rules: [],
+            city_scope: 'all',
+            custom_cities: [],
+            job_types: [],
+            apply_channels: [],
+            factcheck_statuses: [],
+            sources: [],
+            include_keywords: [],
+            excluded_keywords: [],
+          },
+        },
+      }),
+    });
+    if (res.ok) {
+      showToast('已重置为全部岗位默认放行');
+      await loadSettingsPanel();
+      updateCfExtraSummary();
+      await loadPackages();
+      await loadDataDashboard();
+    }
+  });
+  el('cfgCfEnabled')?.addEventListener('change', () => saveCustomFilter(null, false));
+  el('globalFilterBanner')?.addEventListener('click', () => {
+    el('btnTopSettings')?.click();
+    document.querySelector('#cfgNav [data-cfg-sec="prefs"]')?.click();
   });
 
   async function triggerRunScreen() {
@@ -2208,8 +3170,265 @@ REVIEW_HTML = """<!DOCTYPE html>
     }
   });
 
+  async function loadDataDashboard() {
+    try {
+      const qs = new URLSearchParams({
+        source: el('dataSourceFilter')?.value || 'all',
+        job_type: el('dataTypeFilter')?.value || 'all',
+        status: el('dataStatusFilter')?.value || 'active',
+        q: (el('dataSearchInput')?.value || '').trim(),
+        only_custom_matched: el('dataOnlyCustomMatched')?.checked ? 'true' : 'false',
+        limit: '120',
+      });
+      const res = await fetch('/api/data/jobs-dashboard?' + qs.toString());
+      const d = await res.json();
+      const s = d.summary || {};
+      const bd = d.breakdowns || {};
+
+      if (el('dataSummary')) {
+        el('dataSummary').textContent =
+          `当前账号本地库共 ${s.total_jobs || 0} 条岗位（活跃 ${s.active_jobs || 0} · 覆盖 ${s.unique_companies || 0} 家企业 · 近24h新增 ${s.recent_24h || 0}）` +
+          (s.custom_filter_active ? ` · 全局规则生效：${s.custom_filter_summary || '已启用'}` : '');
+      }
+
+      const kpiBox = el('dataKpiGrid');
+      if (kpiBox) {
+        kpiBox.replaceChildren();
+        const kpis = [
+          { label: '累计抓取岗位', val: s.total_jobs || 0, sub: `含已筛除 ${s.filtered_out_jobs || 0} 条` },
+          { label: '活跃有效岗位', val: s.active_jobs || 0, sub: '处于可筛选/投递池' },
+          { label: '已评估 / 已出简历', val: `${s.matched_jobs || 0} / ${s.packages_count || 0}`, sub: 'AI 评分 / 一页定制 PDF' },
+          { label: '覆盖企业数量', val: s.unique_companies || 0, sub: '已去重企业主体' },
+          { label: '近 24 小时新抓', val: s.recent_24h || 0, sub: '本地实时同步增量' },
+          {
+            label: s.custom_filter_active ? '自定义规则命中' : '自定义规则状态',
+            val: s.custom_filter_active ? (s.custom_passed_jobs || 0) : '未启用',
+            sub: s.custom_filter_active ? '点右侧按钮可改分值口径' : '前往设置可自由配置规则',
+          },
+        ];
+        kpis.forEach((k) => {
+          const card = document.createElement('div');
+          card.className = 'data-kpi-card';
+          const lbl = document.createElement('div');
+          lbl.className = 'data-kpi-label';
+          lbl.textContent = k.label;
+          const val = document.createElement('div');
+          val.className = 'data-kpi-val';
+          val.textContent = String(k.val);
+          const sub = document.createElement('div');
+          sub.className = 'data-kpi-sub';
+          sub.textContent = k.sub;
+          card.append(lbl, val, sub);
+          kpiBox.appendChild(card);
+        });
+      }
+
+      const kbBox = el('dataKanbanGrid');
+      if (kbBox) {
+        kbBox.replaceChildren();
+        const makeBoardCard = (titleText, rows, onClickRow) => {
+          const card = document.createElement('div');
+          card.className = 'data-board-card';
+          const hd = document.createElement('div');
+          hd.className = 'data-board-title';
+          const tSpan = document.createElement('span');
+          tSpan.textContent = titleText;
+          const cntSpan = document.createElement('span');
+          cntSpan.style.fontSize = '11px';
+          cntSpan.style.color = '#6b7280';
+          cntSpan.textContent = `${rows.length} 项`;
+          hd.append(tSpan, cntSpan);
+          card.appendChild(hd);
+          if (!rows.length) {
+            const emp = document.createElement('div');
+            emp.style.fontSize = '12px';
+            emp.style.color = '#9ca3af';
+            emp.textContent = '暂无统计数据';
+            card.appendChild(emp);
+            return card;
+          }
+          const maxVal = Math.max(1, ...rows.map((r) => Number(r.count || 0)));
+          rows.forEach((r) => {
+            const row = document.createElement('div');
+            row.className = 'data-bar-row';
+            if (onClickRow) row.onclick = () => onClickRow(r);
+            const meta = document.createElement('div');
+            meta.className = 'data-bar-meta';
+            const left = document.createElement('span');
+            left.textContent = r.label || r.city || r.date || r.key || '-';
+            const right = document.createElement('span');
+            right.style.color = '#5b21b6';
+            right.textContent = r.active !== undefined && r.active !== r.count ? `${r.active}/${r.count}` : String(r.count || 0);
+            meta.append(left, right);
+            const track = document.createElement('div');
+            track.className = 'data-bar-track';
+            const fill = document.createElement('div');
+            fill.className = 'data-bar-fill';
+            fill.style.width = `${Math.max(4, Math.round((Number(r.count || 0) / maxVal) * 100))}%`;
+            track.appendChild(fill);
+            row.append(meta, track);
+            card.appendChild(row);
+          });
+          return card;
+        };
+
+        kbBox.appendChild(
+          makeBoardCard('一、来源渠道分布（点击筛选）', (bd.by_source || []).slice(0, 8), (r) => {
+            if (el('dataSourceFilter')) el('dataSourceFilter').value = r.key || 'all';
+            loadDataDashboard();
+          })
+        );
+        const typeAndCh = [
+          ...(bd.by_job_type || []).map((x) => ({ ...x, _kind: 'type', label: `批次 · ${x.label}` })),
+          ...(bd.by_channel || []).map((x) => ({ ...x, _kind: 'channel', label: `投递 · ${x.label}` })),
+        ];
+        kbBox.appendChild(
+          makeBoardCard('二、批次与投递渠道拆解', typeAndCh.slice(0, 8), (r) => {
+            if (r._kind === 'type' && el('dataTypeFilter')) {
+              el('dataTypeFilter').value = ['校招', '实习', '未知'].includes(r.key) ? r.key : 'all';
+              loadDataDashboard();
+            }
+          })
+        );
+        kbBox.appendChild(
+          makeBoardCard('三、热门城市覆盖 Top 8', (bd.top_cities || []).slice(0, 8), (r) => {
+            if (el('dataSearchInput')) el('dataSearchInput').value = r.city || '';
+            loadDataDashboard();
+          })
+        );
+        kbBox.appendChild(
+          makeBoardCard('四、每日入库趋势（近10天）', (bd.daily_trend || []).slice(-8).reverse(), null)
+        );
+      }
+
+      const metaEl = el('dataJobsMeta');
+      const rowsBox = el('dataJobsRows');
+      const jobs = d.jobs || [];
+      if (metaEl) {
+        const totalMatched = Number(s.matched_query_count ?? jobs.length);
+        metaEl.textContent = `全库共筛选命中 ${totalMatched} 条 · 按规则/匹配评分从高到低展示前 ${jobs.length} 条（单页上限 120 条；可按来源、批次或关键词二次钻取）`;
+      }
+      if (rowsBox) {
+        rowsBox.replaceChildren();
+        if (!jobs.length) {
+          const emp = document.createElement('div');
+          emp.style.padding = '18px 8px';
+          emp.style.color = '#6b7280';
+          emp.style.fontSize = '12.5px';
+          emp.textContent = '当前筛选条件下暂无岗位记录。可点击「重置」或右上角「一键抓取新岗位」导入最新职位。';
+          rowsBox.appendChild(emp);
+        } else {
+          jobs.forEach((j) => {
+            const row = document.createElement('div');
+            row.className = 'data-job-row';
+
+            const left = document.createElement('div');
+            left.style.flex = '1';
+            left.style.minWidth = '240px';
+            const titleLine = document.createElement('div');
+            titleLine.style.fontWeight = '800';
+            titleLine.style.fontSize = '13.5px';
+            titleLine.style.color = 'var(--ink)';
+            titleLine.textContent = `${j.company} · ${j.title}`;
+
+            const subLine = document.createElement('div');
+            subLine.style.fontSize = '11.5px';
+            subLine.style.color = 'var(--muted)';
+            subLine.style.marginTop = '3px';
+            const cText = (j.cities || []).join('/') || '未标注城市';
+            subLine.textContent =
+              `${j.source_label || j.source} · ${j.job_type} · ${cText} · ${j.channel_label}` +
+              (j.deadline ? ` · 截止 ${j.deadline}` : '') +
+              (j.created_at ? ` · 入库 ${j.created_at.slice(0, 10)}` : '');
+
+            left.append(titleLine, subLine);
+            if (Array.isArray(j.custom_hits) && j.custom_hits.length > 0) {
+              const hits = document.createElement('div');
+              hits.className = 'cf-hits-line';
+              j.custom_hits.forEach((ht) => {
+                const tag = document.createElement('span');
+                tag.className = 'cf-hit-tag';
+                tag.textContent = ht;
+                hits.appendChild(tag);
+              });
+              left.appendChild(hits);
+            }
+
+            const right = document.createElement('div');
+            right.style.display = 'flex';
+            right.style.gap = '6px';
+            right.style.alignItems = 'center';
+            right.style.flexWrap = 'wrap';
+
+            const stPill = document.createElement('span');
+            stPill.className = 'pill ' + (j.status === 'active' ? 'pill-approve' : 'pill-later');
+            stPill.textContent = j.status === 'active' ? '活跃' : j.status;
+            right.appendChild(stPill);
+
+            if (j.company_check && j.company_check.risk_level && j.company_check.risk_level !== 'unknown') {
+              const ccPill = document.createElement('span');
+              const lvl = j.company_check.risk_level;
+              ccPill.className = 'pill ' + (lvl === 'severe' ? 'pill-reject' : (lvl === 'warning' ? 'pill-later' : 'pill-approve'));
+              ccPill.textContent = lvl === 'severe' ? '🚨高危' : (lvl === 'warning' ? '⚠️留意' : '🛡️存续');
+              ccPill.title = j.company_check.risk_summary || '';
+              right.appendChild(ccPill);
+            }
+
+            if (s.custom_filter_active) {
+              const cfPill = document.createElement('span');
+              cfPill.className = 'pill ' + (j.custom_passed ? 'pill-approve' : 'pill-reject');
+              cfPill.textContent = j.custom_passed ? `规则 ${j.custom_score}分` : `未达线(${j.custom_score}分)`;
+              right.appendChild(cfPill);
+            } else if (j.match_score !== null && j.match_score !== undefined) {
+              const scPill = document.createElement('span');
+              scPill.className = 'score-badge';
+              scPill.textContent = `AI ${j.match_score}分`;
+              right.appendChild(scPill);
+            }
+
+            if (j.url && new RegExp('^https?://', 'i').test(j.url)) {
+              const link = document.createElement('a');
+              link.className = 'btn btn-outline';
+              link.style.padding = '4px 9px';
+              link.style.fontSize = '11.5px';
+              link.href = j.url;
+              link.target = '_blank';
+              link.rel = 'noopener noreferrer';
+              link.textContent = '原岗链接';
+              right.appendChild(link);
+            }
+
+            row.append(left, right);
+            rowsBox.appendChild(row);
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  el('btnRefreshData')?.addEventListener('click', loadDataDashboard);
+  el('btnDataApplyFilter')?.addEventListener('click', loadDataDashboard);
+  el('dataSearchInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadDataDashboard(); });
+  el('dataSourceFilter')?.addEventListener('change', loadDataDashboard);
+  el('dataTypeFilter')?.addEventListener('change', loadDataDashboard);
+  el('dataStatusFilter')?.addEventListener('change', loadDataDashboard);
+  el('dataOnlyCustomMatched')?.addEventListener('change', loadDataDashboard);
+  el('btnDataResetFilter')?.addEventListener('click', () => {
+    if (el('dataSearchInput')) el('dataSearchInput').value = '';
+    if (el('dataSourceFilter')) el('dataSourceFilter').value = 'all';
+    if (el('dataTypeFilter')) el('dataTypeFilter').value = 'all';
+    if (el('dataStatusFilter')) el('dataStatusFilter').value = 'active';
+    if (el('dataOnlyCustomMatched')) el('dataOnlyCustomMatched').checked = false;
+    loadDataDashboard();
+  });
+  el('btnDataJumpRules')?.addEventListener('click', () => {
+    switchMainTab('settings');
+    document.querySelector('#cfgNav [data-cfg-sec="prefs"]')?.click();
+  });
+  el('btnDataExpand')?.addEventListener('click', triggerExpandOnly);
+
   el('btnRefresh')?.addEventListener('click', () => {
-    loadPackages(); loadApplications(); loadStage5Overview(); loadSystemStatus(); loadNotifications();
+    loadPackages(); loadApplications(); loadStage5Overview(); loadDataDashboard(); loadSystemStatus(); loadNotifications();
     showToast('已刷新全部本地数据');
   });
 
@@ -2224,7 +3443,8 @@ REVIEW_HTML = """<!DOCTYPE html>
       { label: '📄 打开今日待审岗位列表', hint: '审阅', run: () => switchMainTab('pdf') },
       { label: '🔔 查看消息提醒中心', hint: '消息', run: () => switchMainTab('inbox') },
       { label: '📋 切换投递追踪 / Kanban 看板', hint: '看板', run: () => switchMainTab('queue') },
-      { label: '⚙️ 打开模型 / 邮箱 / 云中转接口设置', hint: '设置', run: () => switchMainTab('settings') },
+      { label: '🗂️ 打开岗位数据拆解看板', hint: '数据', run: () => switchMainTab('data') },
+      { label: '⚙️ 打开模型 / 邮箱 / 自定义筛选设置', hint: '设置', run: () => switchMainTab('settings') },
       { label: 'Aa 切换 120% 舒心大字关怀模式', hint: '无障碍', run: () => el('btnCareToggle').click() },
       { label: '🚀 运行 AI 智能匹配与定制简历', hint: 'AI 任务', run: triggerRunScreen },
     ];
@@ -2266,6 +3486,7 @@ REVIEW_HTML = """<!DOCTYPE html>
   loadPackages();
   loadApplications();
   loadStage5Overview();
+  loadDataDashboard();
   loadSystemStatus();
   loadNotifications();
   loadSettingsPanel();
@@ -2274,6 +3495,7 @@ REVIEW_HTML = """<!DOCTYPE html>
   else if (window.location.hash === '#inbox' || window.location.hash === '#messages') switchMainTab('inbox');
   else if (window.location.hash === '#queue') switchMainTab('queue');
   else if (window.location.hash === '#insights') switchMainTab('insights');
+  else if (window.location.hash === '#data') switchMainTab('data');
   else if (window.location.hash === '#detail') switchMainTab('pdf');
 })();
 </script>

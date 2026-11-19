@@ -230,3 +230,37 @@ def test_extract_zhaopin_logged_in_spa_dom_snapshot() -> None:
     assert jobs[0]["cities"] == ["太原"]
     assert jobs[0]["job_type"] == "校招"
     assert jobs[0]["url"] == "https://jobs.zhaopin.com/CC166275810J40926060303.htm"
+
+
+def test_extract_iguopin_live_job_card_spa_and_social_filter() -> None:
+    iguopin_spa = """
+    <div class="job-list-container">
+      <div class="job-card" data-tracker="222400378828818177">
+        <div class="job-left">
+          <div class="job-title"><div class="job-name">会计</div><div class="job-district">「成都-双流区」</div></div>
+          <div class="job-info"><span class="job-salary">6.3~7.1K</span><span class="tag-item">校招</span><span class="tag-item">应届生</span><span class="tag-item">本科</span></div>
+          <div class="job-tag"><span class="ant-tag">会计专员/助理</span></div>
+        </div>
+        <div class="job-right">
+          <div><a class="substring company-name" href="/company?id=1001">示例建设工程咨询集团</a></div>
+        </div>
+      </div>
+      <div class="job-card" data-tracker="222400378828818199">
+        <div class="job-left">
+          <div class="job-title"><div class="job-name">会计主管</div><div class="job-district">「南京-浦口区」</div></div>
+          <div class="job-info"><span class="job-salary">面议</span><span class="tag-item">社招</span><span class="tag-item">3-5年</span><span class="tag-item">本科</span></div>
+        </div>
+        <div class="job-right">
+          <div><a class="substring company-name" href="/company?id=1002">示例社招企业</a></div>
+        </div>
+      </div>
+    </div>
+    """
+    jobs = extract_jobs_from_snapshot(iguopin_spa, filename_hint="https://www.iguopin.com/job/list", exclude_social=True)
+    assert len(jobs) == 1
+    assert jobs[0]["source"] == "iguopin"
+    assert jobs[0]["title"] == "会计"
+    assert jobs[0]["company"] == "示例建设工程咨询集团"
+    assert jobs[0]["cities"] == ["成都-双流区"]
+    assert jobs[0]["job_type"] == "校招"
+    assert jobs[0]["url"] == "https://www.iguopin.com/job/detail?id=222400378828818177"

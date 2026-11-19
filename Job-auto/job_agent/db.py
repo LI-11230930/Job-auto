@@ -120,6 +120,21 @@ CREATE TABLE IF NOT EXISTS app_notifications (
 );
 
 CREATE INDEX IF NOT EXISTS idx_app_notifications_unread ON app_notifications(is_read, id DESC);
+
+CREATE TABLE IF NOT EXISTS company_verifications (
+    company_key TEXT PRIMARY KEY,
+    company_name TEXT NOT NULL,
+    matched_company_name TEXT NOT NULL DEFAULT '',
+    provider TEXT NOT NULL DEFAULT '',
+    reg_status TEXT NOT NULL DEFAULT '',
+    risk_level TEXT NOT NULL DEFAULT 'unknown',
+    risk_summary TEXT NOT NULL DEFAULT '',
+    tags_json TEXT NOT NULL DEFAULT '[]',
+    raw_json TEXT NOT NULL DEFAULT '{}',
+    source_tools TEXT NOT NULL DEFAULT '',
+    error_message TEXT NOT NULL DEFAULT '',
+    checked_at TEXT NOT NULL
+);
 """
 
 
@@ -832,3 +847,95 @@ class Database:
             else:
                 cur = conn.execute("UPDATE app_notifications SET is_read = 1 WHERE is_read = 0")
             return int(cur.rowcount or 0)
+
+    def _ensure_company_verifications_table(self, conn: sqlite3.Connection) -> None:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS company_verifications (
+                company_key TEXT PRIMARY KEY,
+                company_name TEXT NOT NULL,
+                matched_company_name TEXT NOT NULL DEFAULT '',
+                provider TEXT NOT NULL DEFAULT '',
+                reg_status TEXT NOT NULL DEFAULT '',
+                risk_level TEXT NOT NULL DEFAULT 'unknown',
+                risk_summary TEXT NOT NULL DEFAULT '',
+                tags_json TEXT NOT NULL DEFAULT '[]',
+                raw_json TEXT NOT NULL DEFAULT '{}',
+                source_tools TEXT NOT NULL DEFAULT '',
+                error_message TEXT NOT NULL DEFAULT '',
+                checked_at TEXT NOT NULL
+            )
+            """
+        )
+
+    def upsert_company_verification(self, record: dict[str, Any]) -> None:
+        """Persist or refresh one enterprise background verification cache entry."""
+        now = str(record.get("checked_at") or utc_now_iso())
+        with self.connect() as conn:
+            self._ensure_company_verifications_table(conn)
+            conn.execute(
+                """
+                INSERT INTO company_verifications (
+                    company_key, company_name, matched_company_name, provider,
+                    reg_status, risk_level, risk_summary, tags_json, raw_json,
+                    source_tools, error_message, checked_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(company_key) DO UPDATE SET
+                    company_name = excluded.company_name,
+                    matched_company_name = excluded.matched_company_name,
+                    provider = excluded.provider,
+                    reg_status = excluded.reg_status,
+                    risk_level = excluded.risk_level,
+                    risk_summary = excluded.risk_summary,
+                    tags_json = excluded.tags_json,
+                    raw_json = excluded.raw_json,
+                    source_tools = excluded.source_tools,
+                    error_message = excluded.error_message,
+                    checked_at = excluded.checked_at
+                """,
+                (
+                    str(record.get("company_key") or "").strip(),
+                    str(record.get("company_name") or "").strip(),
+                    str(record.get("matched_company_name") or "").strip(),
+                    str(record.get("provider") or "").strip(),
+                    str(record.get("reg_status") or "").strip(),
+                    str(record.get("risk_level") or "unknown").strip(),
+                    str(record.get("risk_summary") or "").strip(),
+                    json.dumps(record.get("tags") or [], ensure_ascii=False),
+                    json.dumps(record.get("raw") or {}, ensure_ascii=False),
+                    str(record.get("source_tools") or "").strip(),
+                    str(record.get("error_message") or "").strip(),
+                    now,
+                ),
+            )
+
+    def get_company_verification(self, company_key: str) -> dict[str, Any] | None:
+        with self.connect() as conn:
+            self._ensure_company_verifications_table(conn)
+            row = conn.execute(
+                "SELECT * FROM company_verifications WHERE company_key = ?",
+                (company_key,),
+            ).fetchone()
+        if row is None:
+            return None
+        return self._decode_company_row(dict(row))
+
+    def list_company_verifications_map(self) -> dict[str, dict[str, Any]]:
+        with self.connect() as conn:
+            self._ensure_company_verifications_table(conn)
+            rows = conn.execute("SELECT * FROM company_verifications").fetchall()
+        return {
+            str(r["company_key"]): self._decode_company_row(dict(r))
+            for r in rows
+        }
+
+    def _decode_company_row(self, item: dict[str, Any]) -> dict[str, Any]:
+        try:
+            item["tags"] = json.loads(item.pop("tags_json", "[]") or "[]")
+        except json.JSONDecodeError:
+            item["tags"] = []
+        try:
+            item["raw"] = json.loads(item.pop("raw_json", "{}") or "{}")
+        except json.JSONDecodeError:
+            item["raw"] = {}
+        return item

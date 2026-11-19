@@ -254,6 +254,10 @@ def read_safe_app_settings(
     push_url_raw = env_map.get(push_env_name, "")
     relay_env_name = (cfg.cloud_relay.relay_secret_env or "CLOUD_RELAY_SECRET").strip()
     relay_secret_raw = env_map.get(relay_env_name, "")
+    from .company_check import COMPANY_MCP_PRESETS, resolve_company_check_endpoint
+
+    cc_url, cc_env_name = resolve_company_check_endpoint(cfg)
+    cc_key_raw = env_map.get(cc_env_name, "") if cc_env_name else ""
 
     master_summary: dict[str, Any] = {"loaded": False, "version_tag": None, "bullets": 0}
     if resolved_db.is_file():
@@ -280,11 +284,17 @@ def read_safe_app_settings(
                     "updated_at": row["created_at"],
                 }
 
+    from .filters import REFERENCE_FILTER_TEMPLATES
+
     return {
         "status": "ok",
         "llm_presets": list(LLM_PROVIDER_PRESETS.values()),
         "email_presets": list(EMAIL_PROVIDER_PRESETS.values()),
         "push_presets": list(PUSH_PROVIDER_PRESETS.values()),
+        "filter_reference_templates": REFERENCE_FILTER_TEMPLATES,
+        "company_check_presets": [
+            {"id": k, **v} for k, v in COMPANY_MCP_PRESETS.items()
+        ],
         "llm": {
             "primary_provider": cfg.llm.primary_provider,
             "base_url": cfg.llm.base_url or llm_preset.get("base_url", ""),
@@ -328,6 +338,7 @@ def read_safe_app_settings(
             "primary_cities": cfg.preferences.primary_cities,
             "secondary_cities": cfg.preferences.secondary_cities,
             "excluded_keywords": cfg.preferences.excluded_keywords,
+            "custom_filter": cfg.preferences.custom_filter.model_dump(),
         },
         "scoring": {
             "min_score_for_package": cfg.scoring.min_score_for_package,
@@ -345,6 +356,18 @@ def read_safe_app_settings(
             "relay_secret_masked": _mask_secret(relay_secret_raw),
             "ttl_days": cfg.cloud_relay.ttl_days,
             "auto_fallback_to_email": cfg.cloud_relay.auto_fallback_to_email,
+        },
+        "company_check": {
+            "enabled": cfg.company_check.enabled,
+            "provider": cfg.company_check.provider,
+            "mcp_url": cc_url,
+            "api_key_env": cc_env_name,
+            "api_key_set": bool(cc_key_raw),
+            "api_key_masked": _mask_secret(cc_key_raw),
+            "cache_days": cfg.company_check.cache_days,
+            "min_score_to_check": cfg.company_check.min_score_to_check,
+            "auto_reject_severe_risk": cfg.company_check.auto_reject_severe_risk,
+            "max_companies_per_run": cfg.company_check.max_companies_per_run,
         },
     }
 
@@ -456,6 +479,49 @@ def save_app_settings(
             sec["secondary_cities"] = _split_csv_tokens(pref_in["secondary_cities"])
         if pref_in.get("excluded_keywords") is not None:
             sec["excluded_keywords"] = _split_csv_tokens(pref_in["excluded_keywords"])
+        if isinstance(pref_in.get("custom_filter"), dict):
+            cf_in = pref_in["custom_filter"]
+            cf_sec = dict(sec.get("custom_filter") or {})
+            if cf_in.get("enabled") is not None:
+                cf_sec["enabled"] = bool(cf_in["enabled"])
+            if cf_in.get("mode") in {"override", "blend"}:
+                cf_sec["mode"] = str(cf_in["mode"])
+            if cf_in.get("base_score") is not None:
+                cf_sec["base_score"] = max(0, min(100, int(cf_in["base_score"])))
+            if cf_in.get("min_display_score") is not None:
+                cf_sec["min_display_score"] = max(0, min(200, int(cf_in["min_display_score"])))
+            if cf_in.get("city_scope") in {"all", "primary_only", "primary_and_secondary", "allow_nationwide"}:
+                cf_sec["city_scope"] = str(cf_in["city_scope"])
+            if isinstance(cf_in.get("rules"), list):
+                cleaned_rules: list[dict[str, Any]] = []
+                for idx, r in enumerate(cf_in["rules"]):
+                    if not isinstance(r, dict):
+                        continue
+                    cleaned_rules.append(
+                        {
+                            "id": str(r.get("id") or f"rule_{idx + 1}").strip(),
+                            "name": str(r.get("name") or f"自定义口径 {idx + 1}").strip(),
+                            "enabled": bool(r.get("enabled", True)),
+                            "field": str(r.get("field") or "any_text"),
+                            "match_mode": str(r.get("match_mode") or "multi_any"),
+                            "values": _split_csv_tokens(r.get("values")),
+                            "action": str(r.get("action") or "add"),
+                            "score": max(0, min(200, int(r.get("score") if r.get("score") is not None else 20))),
+                        }
+                    )
+                cf_sec["rules"] = cleaned_rules
+            for list_key in (
+                "custom_cities",
+                "job_types",
+                "apply_channels",
+                "factcheck_statuses",
+                "sources",
+                "include_keywords",
+                "excluded_keywords",
+            ):
+                if cf_in.get(list_key) is not None:
+                    cf_sec[list_key] = _split_csv_tokens(cf_in[list_key])
+            sec["custom_filter"] = cf_sec
         raw_cfg["preferences"] = sec
 
     if "scoring" in payload and isinstance(payload["scoring"], dict):
@@ -486,6 +552,37 @@ def save_app_settings(
         raw_cfg["cloud_relay"] = sec
         if rin.get("relay_secret"):
             env_updates[sec["relay_secret_env"]] = str(rin["relay_secret"]).strip()
+
+    if "company_check" in payload and isinstance(payload["company_check"], dict):
+        from .company_check import COMPANY_MCP_PRESETS
+
+        ccin = payload["company_check"]
+        sec = dict(raw_cfg.get("company_check") or {})
+        if ccin.get("enabled") is not None:
+            sec["enabled"] = bool(ccin["enabled"])
+        prov = str(ccin.get("provider") or sec.get("provider") or "tianyancha_mcp").strip()
+        if prov in COMPANY_MCP_PRESETS:
+            sec["provider"] = prov
+        preset = COMPANY_MCP_PRESETS.get(prov, {})
+        if ccin.get("mcp_url") is not None:
+            sec["mcp_url"] = str(ccin["mcp_url"] or "").strip()
+        elif prov != "custom_mcp" and preset.get("mcp_url"):
+            sec["mcp_url"] = preset["mcp_url"]
+        if ccin.get("cache_days") is not None:
+            sec["cache_days"] = max(1, min(365, int(ccin["cache_days"])))
+        if ccin.get("min_score_to_check") is not None:
+            sec["min_score_to_check"] = max(0, min(200, int(ccin["min_score_to_check"])))
+        if ccin.get("auto_reject_severe_risk") is not None:
+            sec["auto_reject_severe_risk"] = bool(ccin["auto_reject_severe_risk"])
+        if ccin.get("max_companies_per_run") is not None:
+            sec["max_companies_per_run"] = max(1, min(200, int(ccin["max_companies_per_run"])))
+        key_env = str(
+            ccin.get("api_key_env") or sec.get("api_key_env") or preset.get("default_key_env") or "TYC_MCP_API_KEY"
+        ).strip()
+        sec["api_key_env"] = key_env
+        raw_cfg["company_check"] = sec
+        if ccin.get("api_key"):
+            env_updates[key_env] = str(ccin["api_key"]).strip()
 
     # Validate before writing disk so malformed config never breaks startup.
     validated = UserConfig.model_validate(raw_cfg)

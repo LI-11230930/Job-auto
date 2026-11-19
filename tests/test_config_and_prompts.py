@@ -12,7 +12,7 @@ from job_agent.llm.base import load_prompt_asset
 
 
 def test_load_user_config_and_weights() -> None:
-    cfg = load_user_config()
+    cfg = load_user_config(get_project_root() / "config" / "user_config.example.yaml")
     assert cfg.scoring.min_score_for_package == 80
     assert cfg.notifications.provider == "email_smtp"
     assert cfg.delivery.priority_ats_systems == ["beisen"]

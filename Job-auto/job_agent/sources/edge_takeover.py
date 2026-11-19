@@ -105,14 +105,28 @@ _EXTRACT_DOM_JS = """
       if (title && company) rows.push({ title, company, city, salary, tags: [], url: a?.href || url });
     });
   } else if (site === 'iguopin') {
-    document.querySelectorAll('a[href*="/job/detail/"]').forEach((a) => {
-      const card = a.closest('div[class*="item"], li, .el-card') || a.parentElement?.parentElement;
-      if (!card) return;
-      const title = clean(card.querySelector('[class*="job-name"], [class*="title"], h3, h4')?.textContent || a.textContent);
-      const company = clean(card.querySelector('[class*="company"], [class*="corp"], [class*="org"]')?.textContent);
-      const city = clean(card.querySelector('[class*="city"], [class*="area"], [class*="location"]')?.textContent);
-      if (title && company) rows.push({ title, company, city, salary: '', tags: [], url: a.href || url });
+    document.querySelectorAll('.job-card').forEach((el) => {
+      const title = clean((el.querySelector('.job-name') || el.querySelector('[class*="job-name"]') || el.querySelector('[class*="title"], h3, h4'))?.textContent);
+      const company = clean(el.querySelector('a.company-name, .company-name, .department-name, [class*="company"], [class*="corp"], [class*="org"]')?.textContent);
+      const city = clean(el.querySelector('.job-district, [class*="district"], [class*="city"], [class*="area"], [class*="location"]')?.textContent).replace(/[「」\\[\\]()]/g, '');
+      const salary = clean(el.querySelector('.job-salary, [class*="salary"]')?.textContent);
+      const tags = Array.from(el.querySelectorAll('.job-info .tag-item, .job-tag .ant-tag, .company-info .company-info-item'))
+        .map((t) => clean(t.textContent)).filter(Boolean).slice(0, 8);
+      const trackerId = clean(el.getAttribute('data-tracker'));
+      const a = el.querySelector('a[href*="/job/detail"]');
+      const jobUrl = a?.href || (trackerId ? `https://www.iguopin.com/job/detail?id=${trackerId}` : url);
+      if (title && company) rows.push({ title, company, city, salary, tags, url: jobUrl });
     });
+    if (rows.length === 0) {
+      document.querySelectorAll('a[href*="/job/detail/"]').forEach((a) => {
+        const card = a.closest('div[class*="item"], li, .el-card') || a.parentElement?.parentElement;
+        if (!card) return;
+        const title = clean(card.querySelector('[class*="job-name"], [class*="title"], h3, h4')?.textContent || a.textContent);
+        const company = clean(card.querySelector('[class*="company"], [class*="corp"], [class*="org"]')?.textContent);
+        const city = clean(card.querySelector('[class*="city"], [class*="area"], [class*="location"]')?.textContent).replace(/[「」\\[\\]()]/g, '');
+        if (title && company) rows.push({ title, company, city, salary: '', tags: [], url: a.href || url });
+      });
+    }
   } else if (site === 'shixiseng') {
     document.querySelectorAll('.intern-wrap, [data-intern-id]').forEach((el) => {
       const a = el.querySelector('a.title, a[href*="/intern/"]');
@@ -131,7 +145,11 @@ _NEXT_BTN_JS = """
   const bySite = {
     zhipin: ['.options-pages a.next:not(.disabled)', 'a i.ui-icon-arrow-right'],
     '51job': ['.el-pagination button.btn-next:not([disabled])', 'li.next:not(.disabled) a'],
-    iguopin: ['.el-pagination button.btn-next:not([disabled])'],
+    iguopin: [
+      '.ant-pagination-next:not(.ant-pagination-disabled):not([aria-disabled="true"]) button',
+      'li[title="下一页"][aria-disabled="false"] button',
+      '.el-pagination button.btn-next:not([disabled])',
+    ],
     zhaopin: [
       '.pagination__arrow-next:not(.pagination__arrow-next--disabled)',
       '.soupager a.btn:last-child',

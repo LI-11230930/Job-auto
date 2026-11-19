@@ -53,6 +53,11 @@ class MarkNotificationsReadRequest(BaseModel):
     ids: list[int] | None = None
 
 
+class CompanyVerifyRequest(BaseModel):
+    company: str = Field(..., min_length=1, max_length=200)
+    force: bool = False
+
+
 def create_review_app(
     *,
     db_path: Path | None = None,
@@ -263,6 +268,26 @@ def create_review_app(
 
         return test_llm_connection(load_user_config(), project_root=root)
 
+    @app.post("/api/system/test-company-check")
+    def api_test_company_check() -> dict[str, Any]:
+        from ..company_check import test_company_check_connection
+
+        return test_company_check_connection(load_user_config(), root=root)
+
+    @app.post("/api/company-check/verify")
+    def api_verify_single_company(req: CompanyVerifyRequest) -> dict[str, Any]:
+        from ..company_check import verify_company_with_cache
+
+        cur_cfg = load_user_config()
+        result = verify_company_with_cache(
+            db,
+            cur_cfg,
+            req.company,
+            root=root,
+            force_refresh=req.force,
+        )
+        return {"status": "ok", "company_check": result}
+
     @app.post("/api/system/test-email")
     def api_test_email() -> dict[str, Any]:
         from .digest import send_email_digest
@@ -346,27 +371,345 @@ def create_review_app(
         decision: str = "all",
         job_type: str = "all",
         min_score: int = 0,
+        ignore_global_filter: bool = False,
     ) -> dict[str, Any]:
-        all_for_decision = db.list_packages_for_review(
-            decision_filter=decision,
-            job_type_filter="all",
-            min_score=min_score,
-            limit=300,
+        from ..filters import describe_custom_filter, evaluate_custom_rules
+
+        cur_cfg = load_user_config()
+        cf = cur_cfg.preferences.custom_filter
+        cf_active = (not ignore_global_filter) and bool(cf.enabled)
+        has_active_rules = any(
+            r.enabled and [v for v in r.values if str(v).strip()] for r in cf.rules
+        )
+
+        def _apply_cf(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+            if not cf_active:
+                return rows
+            out: list[dict[str, Any]] = []
+            for item in rows:
+                ev = evaluate_custom_rules(item, cur_cfg)
+                if not ev["passed"]:
+                    continue
+                enriched = dict(item)
+                enriched["ai_score"] = int(item.get("score") or 0)
+                enriched["custom_rule_score"] = int(ev["custom_score"])
+                enriched["custom_rule_hits"] = [
+                    f"{h['name']}"
+                    + (f"+{h['score_delta']}" if h["score_delta"] > 0 else (str(h["score_delta"]) if h["score_delta"] < 0 else ""))
+                    for h in ev["hits"]
+                ]
+                if has_active_rules:
+                    enriched["score"] = int(ev["effective_score"])
+                out.append(enriched)
+            if has_active_rules:
+                out.sort(key=lambda r: (int(r.get("score") or 0), int(r.get("package_id") or 0)), reverse=True)
+            return out
+
+        all_for_decision = _apply_cf(
+            db.list_packages_for_review(
+                decision_filter=decision,
+                job_type_filter="all",
+                min_score=min_score,
+                limit=500,
+            )
         )
         campus_count = sum(1 for p in all_for_decision if p.get("job_type") != "实习")
         intern_count = sum(1 for p in all_for_decision if p.get("job_type") == "实习")
-        pkgs = db.list_packages_for_review(
-            decision_filter=decision,
-            job_type_filter=job_type,
-            min_score=min_score,
-            limit=200,
-        )
+        pkgs = _apply_cf(
+            db.list_packages_for_review(
+                decision_filter=decision,
+                job_type_filter=job_type,
+                min_score=min_score,
+                limit=500 if cf_active else 200,
+            )
+        )[:200]
+        from ..company_check import normalize_company_key
+
+        cc_map = db.list_company_verifications_map()
+        for item in pkgs:
+            cc_rec = cc_map.get(normalize_company_key(str(item.get("company") or "")))
+            if cc_rec:
+                item["company_check"] = {
+                    "risk_level": cc_rec.get("risk_level", "unknown"),
+                    "risk_summary": cc_rec.get("risk_summary", ""),
+                    "reg_status": cc_rec.get("reg_status", ""),
+                    "tags": cc_rec.get("tags") or [],
+                    "checked_at": cc_rec.get("checked_at", ""),
+                    "provider": cc_rec.get("provider", ""),
+                }
         apps = db.list_applications(limit=200)
         return {
             "packages": pkgs,
             "applications_count": len(apps),
             "campus_count": campus_count,
             "intern_count": intern_count,
+            "global_filter_active": cf_active,
+            "global_filter_summary": describe_custom_filter(cur_cfg) if cf_active else "",
+        }
+
+    @app.get("/api/data/jobs-dashboard")
+    def api_data_jobs_dashboard(
+        source: str = "all",
+        job_type: str = "all",
+        status: str = "active",
+        q: str = "",
+        only_custom_matched: bool = False,
+        limit: int = 120,
+    ) -> dict[str, Any]:
+        """Return detailed captured job breakdowns, metrics, runs, and filterable rows."""
+        from datetime import UTC, datetime, timedelta
+
+        from ..company_check import normalize_company_key
+        from ..filters import describe_custom_filter, evaluate_custom_rules
+
+        cur_cfg = load_user_config()
+        cf_active = bool(cur_cfg.preferences.custom_filter.enabled)
+        db.init_schema()
+        cc_map = db.list_company_verifications_map()
+
+        with db.connect() as conn:
+            raw_rows = [
+                dict(r)
+                for r in conn.execute(
+                    """
+                    SELECT j.id,
+                           j.source,
+                           j.company,
+                           j.title,
+                           j.cities_json,
+                           j.job_type,
+                           j.jd_text,
+                           j.url,
+                           j.apply_channel,
+                           j.deadline,
+                           j.industry,
+                           j.status,
+                           j.priority_rank,
+                           j.created_at,
+                           j.updated_at,
+                           (SELECT m.score FROM matches m WHERE m.job_id = j.id ORDER BY m.id DESC LIMIT 1) AS match_score,
+                           (SELECT p.id FROM packages p WHERE p.job_id = j.id ORDER BY p.id DESC LIMIT 1) AS package_id
+                    FROM jobs j
+                    ORDER BY j.id DESC
+                    """
+                ).fetchall()
+            ]
+            run_rows = [
+                dict(r)
+                for r in conn.execute(
+                    "SELECT id, run_type, status, stats_json, started_at FROM runs ORDER BY id DESC LIMIT 10"
+                ).fetchall()
+            ]
+
+        cutoff_24h = (datetime.now(UTC) - timedelta(hours=24)).isoformat(timespec="seconds")
+        source_labels = {
+            "iguopin": "国聘网",
+            "zhaopin": "智联招聘",
+            "zhipin": "Boss直聘",
+            "51job": "前程无忧",
+            "ncss": "国家24365",
+            "shixiseng": "实习僧",
+            "demo_sample": "示例演示",
+            "manual": "手动录入",
+        }
+        channel_labels = {
+            "company_portal": "企业官网",
+            "third_party": "招聘平台/第三方",
+            "email": "邮箱直投",
+            "unknown": "未标注",
+        }
+
+        def _src_bucket(s: str) -> str:
+            low = (s or "").strip().lower()
+            if low.startswith("campus_site"):
+                return "campus_site"
+            return low or "other"
+
+        source_counts: dict[str, dict[str, int]] = {}
+        type_counts: dict[str, int] = {}
+        channel_counts: dict[str, int] = {}
+        city_counts: dict[str, int] = {}
+        daily_counts: dict[str, int] = {}
+        companies_seen: set[str] = set()
+
+        total_jobs = len(raw_rows)
+        active_jobs = 0
+        matched_jobs = 0
+        packages_jobs = 0
+        recent_24h = 0
+        custom_passed_jobs = 0
+
+        q_low = (q or "").strip().lower()
+        src_filter = (source or "all").strip().lower()
+        type_filter = (job_type or "all").strip()
+        status_filter = (status or "all").strip().lower()
+        bounded = max(1, min(int(limit), 300))
+
+        filtered_items: list[dict[str, Any]] = []
+
+        for r in raw_rows:
+            try:
+                cities = json.loads(r.get("cities_json") or "[]")
+            except json.JSONDecodeError:
+                cities = []
+            r["cities"] = cities
+
+            src_raw = str(r.get("source") or "")
+            sb = _src_bucket(src_raw)
+            jtype = str(r.get("job_type") or "未知")
+            ch = str(r.get("apply_channel") or "unknown")
+            st = str(r.get("status") or "active")
+            comp = str(r.get("company") or "").strip()
+            created = str(r.get("created_at") or "")
+
+            if comp:
+                companies_seen.add(comp)
+            if st == "active":
+                active_jobs += 1
+            if r.get("match_score") is not None:
+                matched_jobs += 1
+            if r.get("package_id") is not None:
+                packages_jobs += 1
+            if created >= cutoff_24h:
+                recent_24h += 1
+
+            sc_entry = source_counts.setdefault(sb, {"total": 0, "active": 0})
+            sc_entry["total"] += 1
+            if st == "active":
+                sc_entry["active"] += 1
+
+            type_counts[jtype] = type_counts.get(jtype, 0) + 1
+            channel_counts[ch] = channel_counts.get(ch, 0) + 1
+
+            if st == "active":
+                for c in cities:
+                    c_clean = str(c).strip()
+                    if c_clean:
+                        city_counts[c_clean] = city_counts.get(c_clean, 0) + 1
+
+            if len(created) >= 10:
+                day_key = created[:10]
+                daily_counts[day_key] = daily_counts.get(day_key, 0) + 1
+
+            ev = evaluate_custom_rules(r, cur_cfg) if cf_active else {"passed": True, "effective_score": int(r.get("match_score") or 0), "hits": []}
+            if st == "active" and ev["passed"]:
+                custom_passed_jobs += 1
+
+            if status_filter != "all" and st != status_filter:
+                continue
+            if src_filter != "all" and sb != src_filter:
+                continue
+            if type_filter != "all" and jtype != type_filter:
+                continue
+            if only_custom_matched and cf_active and not ev["passed"]:
+                continue
+            if q_low:
+                blob = f"{comp} {r.get('title', '')} {' '.join(str(x) for x in cities)} {src_raw}".lower()
+                if q_low not in blob:
+                    continue
+
+            filtered_items.append(
+                {
+                    "id": int(r["id"]),
+                    "source": sb,
+                    "source_raw": src_raw,
+                    "source_label": source_labels.get(sb, "校招站点" if sb == "campus_site" else sb),
+                    "company": comp,
+                    "title": str(r.get("title") or ""),
+                    "cities": cities,
+                    "job_type": jtype,
+                    "apply_channel": ch,
+                    "channel_label": channel_labels.get(ch, ch),
+                    "deadline": str(r.get("deadline") or ""),
+                    "status": st,
+                    "url": str(r.get("url") or ""),
+                    "match_score": r.get("match_score"),
+                    "package_id": r.get("package_id"),
+                    "created_at": created,
+                    "custom_passed": bool(ev["passed"]),
+                    "custom_score": int(ev["effective_score"]),
+                    "custom_hits": [
+                        f"{h['name']}"
+                        + (f"+{h['score_delta']}" if h["score_delta"] > 0 else (str(h["score_delta"]) if h["score_delta"] < 0 else ""))
+                        for h in ev["hits"]
+                    ],
+                    "company_check": cc_map.get(normalize_company_key(comp)),
+                }
+            )
+
+        matched_query_count = len(filtered_items)
+        if cf_active:
+            filtered_items.sort(
+                key=lambda x: (not bool(x["custom_passed"]), -int(x["custom_score"]), -int(x["id"]))
+            )
+        filtered_items = filtered_items[:bounded]
+
+        by_source = [
+            {
+                "key": k,
+                "label": source_labels.get(k, "校招站点" if k == "campus_site" else k),
+                "count": v["total"],
+                "active": v["active"],
+            }
+            for k, v in sorted(source_counts.items(), key=lambda kv: (-kv[1]["total"], kv[0]))
+        ]
+        by_job_type = [
+            {"key": k, "label": k, "count": v}
+            for k, v in sorted(type_counts.items(), key=lambda kv: (-kv[1], kv[0]))
+        ]
+        by_channel = [
+            {"key": k, "label": channel_labels.get(k, k), "count": v}
+            for k, v in sorted(channel_counts.items(), key=lambda kv: (-kv[1], kv[0]))
+        ]
+        top_cities = [
+            {"city": k, "count": v}
+            for k, v in sorted(city_counts.items(), key=lambda kv: (-kv[1], kv[0]))[:14]
+        ]
+        daily_trend = [
+            {"date": k, "count": daily_counts[k]}
+            for k in sorted(daily_counts.keys())[-10:]
+        ]
+        recent_runs = []
+        for rr in run_rows:
+            try:
+                stats_obj = json.loads(rr.get("stats_json") or "{}")
+            except json.JSONDecodeError:
+                stats_obj = {}
+            recent_runs.append(
+                {
+                    "id": int(rr["id"]),
+                    "run_type": rr["run_type"],
+                    "status": rr["status"],
+                    "stats": stats_obj,
+                    "started_at": rr["started_at"],
+                }
+            )
+
+        return {
+            "status": "ok",
+            "summary": {
+                "total_jobs": total_jobs,
+                "active_jobs": active_jobs,
+                "filtered_out_jobs": total_jobs - active_jobs,
+                "matched_jobs": matched_jobs,
+                "packages_count": packages_jobs,
+                "unique_companies": len(companies_seen),
+                "recent_24h": recent_24h,
+                "custom_filter_active": cf_active,
+                "custom_filter_summary": describe_custom_filter(cur_cfg) if cf_active else "",
+                "custom_passed_jobs": custom_passed_jobs if cf_active else active_jobs,
+                "matched_query_count": matched_query_count,
+                "returned_count": len(filtered_items),
+            },
+            "breakdowns": {
+                "by_source": by_source,
+                "by_job_type": by_job_type,
+                "by_channel": by_channel,
+                "top_cities": top_cities,
+                "daily_trend": daily_trend,
+            },
+            "recent_runs": recent_runs,
+            "jobs": filtered_items,
         }
 
     @app.get("/api/packages/{package_id}")
@@ -536,6 +879,7 @@ def create_review_app(
             output_dir=resolved_output / "digest",
             min_score=cur_cfg.scoring.min_score_for_package,
             top_n=cur_cfg.scoring.daily_top_n,
+            cfg=cur_cfg,
         )
         res.pop("digest_markdown", None)
         return {"status": "ok", **res}

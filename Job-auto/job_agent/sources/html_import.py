@@ -205,7 +205,63 @@ def _extract_51job_html(html_text: str, *, exclude_social: bool = True) -> list[
 
 def _extract_iguopin_html(html_text: str, *, exclude_social: bool = True) -> list[dict[str, Any]]:
     jobs: list[dict[str, Any]] = []
-    # Match links to iguopin job details + surrounding card content
+    # Match live iguopin SPA .job-card blocks first
+    card_blocks = re.split(r'(?=<div[^>]+class="[^"]*\bjob-card\b[^"]*")', html_text)
+    for block in card_blocks:
+        if 'class="' not in block[:200] or "job-card" not in block[:200]:
+            continue
+        title_m = re.search(
+            r'class="[^"]*job-name[^"]*"[^>]*>(.*?)</', block, re.DOTALL
+        ) or re.search(
+            r'class="[^"]*(?:title|position-name)[^"]*"[^>]*>(.*?)</', block, re.DOTALL
+        )
+        comp_m = re.search(
+            r'class="[^"]*(?:company-name|department-name|corp-name|org-name)[^"]*"[^>]*>(.*?)</',
+            block,
+            re.DOTALL,
+        )
+        city_m = re.search(
+            r'class="[^"]*(?:job-district|district|city|location|area)[^"]*"[^>]*>(.*?)</',
+            block,
+            re.DOTALL,
+        )
+        sal_m = re.search(r'class="[^"]*job-salary[^"]*"[^>]*>(.*?)</', block, re.DOTALL)
+        tracker_m = re.search(r'data-tracker="([^"]+)"', block[:300])
+        detail_m = re.search(r'href="([^"]*/job/detail[^"]*)"', block)
+        tags = [_strip_tags(t) for t in re.findall(r'class="[^"]*(?:tag-item|ant-tag)[^"]*"[^>]*>(.*?)</', block, re.DOTALL)]
+        title = _strip_tags(title_m.group(1)) if title_m else ""
+        company = _strip_tags(comp_m.group(1)) if comp_m else ""
+        city_raw = re.sub(r"[「」\[\]()]", "", _strip_tags(city_m.group(1)) if city_m else "")
+        salary = _strip_tags(sal_m.group(1)) if sal_m else ""
+        if detail_m:
+            url = urljoin("https://www.iguopin.com", detail_m.group(1))
+        elif tracker_m:
+            url = f"https://www.iguopin.com/job/detail?id={tracker_m.group(1).strip()}"
+        else:
+            url = ""
+        jd_parts = ["【来源平台】国聘网"]
+        if salary:
+            jd_parts.append(f"【薪资范围】{salary}")
+        jd_parts.append(f"【工作地点】{city_raw or '见详情页'}")
+        if tags:
+            jd_parts.append(f"【要求标签】{'、'.join(t for t in tags if t)}")
+        job = _build_job(
+            source="iguopin",
+            company=company,
+            title=title,
+            city_raw=city_raw,
+            url=url,
+            jd_text="\n".join(jd_parts),
+            job_type_hint=" ".join(tags),
+            exclude_social=exclude_social,
+        )
+        if job:
+            jobs.append(job)
+
+    if jobs:
+        return jobs
+
+    # Fallback: legacy links to iguopin job details + surrounding card content
     for m in re.finditer(r'href="([^"]*/job/detail/[^"]+)"', html_text):
         url = urljoin("https://www.iguopin.com", m.group(1))
         start = max(0, m.start() - 500)

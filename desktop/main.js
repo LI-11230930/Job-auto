@@ -123,11 +123,12 @@ async function isBackendReady() {
 
 function resolveBackendCommand(codeRoot) {
   const exeName = process.platform === 'win32' ? 'job-agent-backend.exe' : 'job-agent-backend';
-  const bundledCandidates = [
-    path.join(process.resourcesPath || '', 'backend', exeName),
-    path.join(codeRoot, 'backend', exeName),
-    path.join(__dirname, 'backend-bin', 'job-agent-backend', exeName),
-  ];
+  const bundledCandidates = app.isPackaged
+    ? [
+        path.join(process.resourcesPath || '', 'backend', exeName),
+        path.join(codeRoot, 'backend', exeName),
+      ]
+    : [];
   for (const exe of bundledCandidates) {
     if (exe && fs.existsSync(exe)) {
       return { cmd: exe, prefixArgs: [], mode: 'bundled_exe' };

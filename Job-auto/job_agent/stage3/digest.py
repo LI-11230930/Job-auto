@@ -166,11 +166,30 @@ def build_daily_digest(
     output_dir: Path,
     min_score: int = 80,
     top_n: int = 30,
+    cfg: UserConfig | None = None,
 ) -> dict[str, Any]:
     """Build daily Stage 2/3 summary Markdown digest split by 秋招/校招 and 实习."""
     output_dir.mkdir(parents=True, exist_ok=True)
     today = datetime.now().strftime("%Y-%m-%d")
-    packages = db.list_packages_for_review(decision_filter="all", min_score=min_score, limit=top_n)
+    cf_enabled = bool(cfg and cfg.preferences.custom_filter.enabled)
+    packages = db.list_packages_for_review(
+        decision_filter="all",
+        min_score=0 if cf_enabled else min_score,
+        limit=max(top_n, 200) if cf_enabled else top_n,
+    )
+    if cf_enabled and cfg is not None:
+        from ..filters import evaluate_custom_rules
+
+        filtered_pkgs: list[dict[str, Any]] = []
+        for pkg in packages:
+            ev = evaluate_custom_rules(pkg, cfg)
+            if not ev["passed"]:
+                continue
+            item = dict(pkg)
+            item["score"] = int(ev["effective_score"])
+            filtered_pkgs.append(item)
+        filtered_pkgs.sort(key=lambda x: (-int(x.get("score") or 0), -int(x.get("package_id") or 0)))
+        packages = filtered_pkgs[:top_n]
     apps = db.list_applications(limit=200)
     recent_active_jobs, new_24h_count = _query_recent_active_jobs(db, limit=10)
 
